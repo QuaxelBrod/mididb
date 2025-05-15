@@ -4,7 +4,7 @@
     "allowJs": true,
     //"module": "commonjs",
     "module": "ESNext",
-    "jsx": "react",
+    "jsx": "react-jsx",
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,

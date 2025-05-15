@@ -42,6 +42,8 @@
     "typescript": "~4.5.4"
   },
   "dependencies": {
+    "@tonejs/midi": "^2.0.28",
+    "soundfont-player": "^0.12.0",
     "electron-squirrel-startup": "^1.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

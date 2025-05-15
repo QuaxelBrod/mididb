@@ -26,20 +26,19 @@
  * ```
  */
 
+import React from 'react';
+import { createRoot } from 'react-dom/client';
 import './index.css';
+import MidiDB from './web/MidiDB';
 
 const rootElement = document.getElementById("root");
 if (rootElement) {
-  rootElement.appendChild(document.createElement("div").appendChild(document.createTextNode("Hello World!")));
+  const root = createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <MidiDB />
+    </React.StrictMode>
+  );
 } else {
   console.error("Root element not found");
 }
-
-// const root = createRoot(rootElement);
-
-// root.render(
-//   <StrictMode>
-//     <App />
-//   </StrictMode>
-// );
-
