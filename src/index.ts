@@ -138,6 +138,14 @@ ipcMain.handle('open-midi-file', async () => {
   return null;
 });
 
-ipcMain.handle('load-soundfont', async (_, path) => {
-  return fs.promises.readFile(path);
+ipcMain.handle('load-soundfont', async (_event, soundfontName: string) => {
+  try {
+    // Absoluten Pfad ermitteln, falls nötig
+    let resolvedPath = path.join(app.getAppPath(), "soundfont", soundfontName);
+    const data = fs.readFileSync(resolvedPath);
+    return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength); // ArrayBuffer
+  } catch (err) {
+    console.error('Fehler beim Laden des Soundfonts:', err);
+    return null;
+  }
 });

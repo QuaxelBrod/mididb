@@ -93,3 +93,5 @@ out/
 
 # the database
 database.db
+
+soundfont/*.sf*

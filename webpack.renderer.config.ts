@@ -17,6 +17,14 @@ rules.push({
   use: [{ loader: 'style-loader' }, { loader: 'css-loader' }],
 });
 
+rules.push({
+  test: /\.js$/,
+  exclude: /node_modules/,
+  use: {
+    loader: 'babel-loader', // Or ts-loader if you're using TypeScript
+  },
+});
+
 export const rendererConfig: Configuration = {
   module: {
     rules,
