@@ -1,25 +1,75 @@
 // MetadataView.tsx
-import React from 'react';
+import React, { use, useEffect, useState } from 'react';
+import { MidiParser } from "../midi_parser"
 //import { Midi } from '@tonejs/midi';
 
 interface MetadataViewProps {
-  midiData: any;
+    midiData: ILoadMidiFile;
 }
 
 const MetadataView: React.FC<MetadataViewProps> = ({ midiData }) => {
-  return (
-    <div className="metadata-container">
-      <h2>MIDI Metadata</h2>
-      <div className="metadata-grid">
-        <div>Track Count:</div>
-        <div>{midiData.tracks.length}</div>
-        <div>Duration:</div>
-        <div>{midiData.duration.toFixed(2)}s</div>
-        <div>Tempo:</div>
-        <div>{midiData.header.tempos[0]?.bpm || 120} BPM</div>
-      </div>
-    </div>
-  );
+    const [midiParser, setMidiParser] = useState<any>(null);
+
+    useEffect(() => {
+        try {
+            const midiFile = new MidiParser(new Uint8Array(midiData.data));
+            setMidiParser(midiFile);
+        } catch (e) {
+            console.error("Fehler beim Parsen der MIDI-Datei:", e);
+            setMidiParser(null);
+        }
+    }, [midiData]);
+
+
+    return (
+        <div className="metadata-container">
+            <h2>MIDI Metadata</h2>
+            <div className="metadata-grid">
+                <div>File Path:</div>
+                <div>{midiData.filePath}</div>
+
+                <div>File Name:</div>
+                <div>{midiData.fileName}</div>
+                <div>File Directory:</div>
+                <div>{midiData.fileDir}</div>
+                <div>File Extension:</div>
+                <div>{midiData.fileExt}</div>
+                <hr />
+
+                <div>Copyright Notice:</div>
+                <div>{midiParser && midiParser.copyrightNotice?.join(', ')}</div>
+                <div>Track Name:</div>
+                <div>{midiParser && midiParser.trackName?.join(', ')}</div>
+                <div>Instrument Name:</div>
+                <div>{midiParser && midiParser.instrumentName?.join(', ')}</div>
+                <div>Lyrics:</div>
+                <div>{midiParser && midiParser.lyrics?.join(', ')}</div>
+                <div>Text:</div>
+                <div>{midiParser && midiParser.text?.join(', ')}</div>
+                <div>Tempo:</div>
+                <div>{midiParser && midiParser.tempo?.join(', ')}</div>
+                <div>Signature:</div>
+                <div>{midiParser && midiParser.signature?.join(', ')}</div>
+
+                <hr />
+                <div>parser Header</div>
+                <textarea
+                    className="parser-header"
+                    readOnly
+                    value={midiParser && midiParser.header ? JSON.stringify(midiParser.header, null, 2) : ""}
+                    rows={10}
+                />
+                <div>parser Tracks</div>
+                <textarea
+                    className="parser-header"
+                    readOnly
+                    rows={10}
+                    value={midiParser && midiParser.tracks ? JSON.stringify(midiParser.tracks, null, 2) : ""}
+                />
+
+            </div>
+        </div>
+    );
 };
 
 export default MetadataView;

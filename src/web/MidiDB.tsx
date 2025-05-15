@@ -6,7 +6,7 @@ import MidiPlayer from './Midiplayer';
 
 
 const MidiDB: React.FC = () => {
-  const [midiData, setMidiData] = useState<ArrayBuffer | null>(null);
+  const [midiData, setMidiData] = useState<ILoadMidiFile | null>(null);
   const [soundfont, setSoundfont] = useState<ArrayBuffer | null>(null);
 
   const loadMidiFile = async () => {
@@ -40,14 +40,14 @@ const MidiDB: React.FC = () => {
 
       {midiData && (
         <div className="main-content">
-          {/* <div className="metadata-section">
+          <div className="metadata-section">
             <MetadataView midiData={midiData} />
-          </div> */}
+          </div>
 
           {soundfont && (
             <div className="player-section">
               <MidiPlayer
-                midiData={midiData}
+                midiData={midiData.data}
                 soundfont={soundfont} // Hier den Soundfont-Pfad angeben
               />
             </div>

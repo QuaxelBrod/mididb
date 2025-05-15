@@ -127,25 +127,35 @@ app.on('activate', () => {
 
 
 ipcMain.handle('open-midi-file', async () => {
-  const { filePaths } = await dialog.showOpenDialog({
-    properties: ['openFile'],
-    filters: [{ name: 'MIDI Files', extensions: ['mid', 'midi'] }]
-  });
-  
-  if (filePaths[0]) {
-    return fs.promises.readFile(filePaths[0]);
-  }
-  return null;
+    const { filePaths } = await dialog.showOpenDialog({
+        properties: ['openFile'],
+        filters: [{ name: 'MIDI Files', extensions: ['mid', 'midi'] }]
+    });
+    try {
+        if (filePaths[0]) {
+            let ret = {
+                filePath: filePaths[0],
+                fileName: path.basename(filePaths[0]),
+                fileDir: path.dirname(filePaths[0]),
+                fileExt: path.extname(filePaths[0]),
+                data: fs.readFileSync(filePaths[0])
+            }
+            return ret;
+        }
+    } catch (err) {
+        console.error('Fehler beim Laden der MIDI-Datei:', err);
+    }
+    return null;
 });
 
 ipcMain.handle('load-soundfont', async (_event, soundfontName: string) => {
-  try {
-    // Absoluten Pfad ermitteln, falls nötig
-    let resolvedPath = path.join(app.getAppPath(), "soundfont", soundfontName);
-    const data = fs.readFileSync(resolvedPath);
-    return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength); // ArrayBuffer
-  } catch (err) {
-    console.error('Fehler beim Laden des Soundfonts:', err);
-    return null;
-  }
+    try {
+        // Absoluten Pfad ermitteln, falls nötig
+        let resolvedPath = path.join(app.getAppPath(), "soundfont", soundfontName);
+        const data = fs.readFileSync(resolvedPath);
+        return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength); // ArrayBuffer
+    } catch (err) {
+        console.error('Fehler beim Laden des Soundfonts:', err);
+        return null;
+    }
 });
