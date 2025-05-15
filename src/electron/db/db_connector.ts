@@ -45,7 +45,7 @@ class Database {
                     }
                 });
             });
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error reading SQL file: ' + err.message);
             return false;
         }

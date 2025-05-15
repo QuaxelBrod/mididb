@@ -28,4 +28,18 @@
 
 import './index.css';
 
-console.log('👋 This message is being logged by "renderer.js", included via webpack');
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  rootElement.appendChild(document.createElement("div").appendChild(document.createTextNode("Hello World!")));
+} else {
+  console.error("Root element not found");
+}
+
+// const root = createRoot(rootElement);
+
+// root.render(
+//   <StrictMode>
+//     <App />
+//   </StrictMode>
+// );
+
