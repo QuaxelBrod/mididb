@@ -4,5 +4,6 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electron', {
   openMidiFile: () => ipcRenderer.invoke('open-midi-file'),
-  loadSoundfont: (name: string) => ipcRenderer.invoke('load-soundfont', name)
+  scanMidiDir: () => ipcRenderer.invoke('start-scan-dir'),
+  loadSoundfont: (name: string) => ipcRenderer.invoke('load-soundfont', name),
 });

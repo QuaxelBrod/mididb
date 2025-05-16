@@ -65,6 +65,7 @@ declare global {
   interface Window {
     electron: {
       openMidiFile: () => Promise<IMidiFileInformation>;
+      scanMidiDir: () => Promise<boolean>,
       loadSoundfont: (path: string) => Promise<ArrayBuffer>;
     };
   }

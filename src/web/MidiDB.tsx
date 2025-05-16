@@ -23,6 +23,12 @@ const MidiDB: React.FC = () => {
     setLoading(false);
   };
 
+  const scanMidiDir = async () => {
+    setLoading(true);
+    const result = await window.electron.scanMidiDir();
+    setLoading(false);
+  }
+
   // Beispiel in deiner Komponente
   const loadSoundfont = async () => {
     const arrayBuffer = await window.electron.loadSoundfont('alex_gm.sf2');
@@ -44,6 +50,7 @@ const MidiDB: React.FC = () => {
     <div className="app-container">
       <div style={{ display: 'flex', alignItems: 'center', gap: '10rem', marginBottom: '1rem', marginLeft: 20 }}>
         <div>
+          <button onClick={scanMidiDir}>Scan dir</button>
           <button onClick={loadMidiFile}>Open MIDI File</button>
         </div>
         {/* Player in der Titelleiste */}

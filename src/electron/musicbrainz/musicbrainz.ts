@@ -195,7 +195,7 @@ export async function getTopListForParams(params: IMusicbrainzRequestParams, n =
     if (query_string_array.length === 0) return [];
 
     let query_string = query_string_array.join(' AND ').trim();
-    console.log('query_string:', query_string);
+    //console.log('query_string:', query_string);
     let result = await mbApi.search('recording', {
         query: query_string,
         limit: 100
