@@ -11,12 +11,8 @@ const MetadataView: React.FC<MetadataViewProps> = ({ midiData }) => {
     const [midiParser, setMidiParser] = useState<any>(null);
 
     useEffect(() => {
-        try {
-            const midiFile = new MidiParser(new Uint8Array(midiData.data));
-            setMidiParser(midiFile);
-        } catch (e) {
-            console.error("Fehler beim Parsen der MIDI-Datei:", e);
-            setMidiParser(null);
+        if (midiData.midiParser) {
+            setMidiParser(midiData.midiParser);
         }
     }, [midiData]);
 

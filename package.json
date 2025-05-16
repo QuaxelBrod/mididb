@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "My Electron application description",
   "main": ".webpack/main",
+  "type_": "module",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
@@ -44,6 +45,8 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
+    "musicbrainz-api": "^0.25.0",
+    "ollama": "^0.5.15",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "spessasynth_lib": "^3.26.12",

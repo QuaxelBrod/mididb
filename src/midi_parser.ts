@@ -26,7 +26,7 @@ function calculateTimeSignature(numerator:number, denominatorPower:number): stri
 }
 
 export class MidiParser {
-    data: Uint8Array;
+    // data: Uint8Array;
     header: MidiHeader | null = null;
     tracks: MidiTrack[] = [];
 
@@ -39,12 +39,27 @@ export class MidiParser {
     signature: Array<string> = [];
 
     constructor(data: Uint8Array) {
-        this.data = data;
-        this.parse();
+        //this.data = data;
+        this.parse(data);
     }
 
-    private parse() {
-        const p = new Parser(this.data);
+    toJson() {
+        return {
+            header: this.header,
+            tracks: this.tracks,
+            copyrightNotice: this.copyrightNotice,
+            trackName: this.trackName,
+            instrumentName: this.instrumentName,
+            lyrics: this.lyrics,
+            text: this.text,
+            tempo: this.tempo,
+            signature: this.signature,
+        };
+    }
+
+
+    private parse(data: Uint8Array) {
+        const p = new Parser(data);
 
         const headerChunk = p.readChunk();
         if (headerChunk.id !== 'MThd') {
