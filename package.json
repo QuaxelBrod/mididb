@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
+    "mongodb": "^6.16.0",
     "musicbrainz-api": "^0.25.0",
     "ollama": "^0.5.15",
     "react": "^19.1.0",

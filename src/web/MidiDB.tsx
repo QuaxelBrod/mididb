@@ -42,27 +42,27 @@ const MidiDB: React.FC = () => {
 
   return (
     <div className="app-container">
-      <button onClick={loadMidiFile}>Open MIDI File</button>
-      {/* <button onClick={loadSoundfont}>Load Soundfont</button> */}
-
-      {loading && (
-        <div className="wait-screen" style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(255,255,255,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div>
-            <h2>Bitte warten...</h2>
-            <div className="spinner" />
-          </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10rem', marginBottom: '1rem', marginLeft: 20 }}>
+        <div>
+          <button onClick={loadMidiFile}>Open MIDI File</button>
         </div>
-      )}
+        {/* Player in der Titelleiste */}
+        {soundfont && midiData && (
+          <div className="player-section">
+            <MidiPlayer
+              midiData={midiData.data}
+              soundfont={soundfont}
+            />
+          </div>
+        )}
+      </div>
 
-      <div className="main-content" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+      <div className="main-content"
+        style={{
+          display: 'flex',
+          gap: '2rem',
+          alignItems: 'flex-start'
+        }}>
         {/* MIDI-Informationen */}
         {midiData && (
           <div className="metadata-section" style={{ flex: 1 }}>
@@ -84,38 +84,47 @@ const MidiDB: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Musicbrainz-Informationen */}
+        {musicbrainz && (
+          <div className="musicbrainz-section" style={{ flex: 1 }}>
+            <h2>Musicbrainz Result</h2>
+            {musicbrainz.top.map((item, index) => (
+              <div key={index} className="musicbrainz-result">
+                <p>Artist: {item.artist}</p>
+                <p>Title: {item.title}</p>
+                <p>Release: {item.firstReleaseDate}</p>
+                <p>Album: {item.album}</p>
+              </div>
+            ))}
+            <hr />
+            {musicbrainz.oldest && (
+              <div className="musicbrainz-oldest">
+                <h3>Oldest Release</h3>
+                <p>Artist: {musicbrainz.oldest.artist}</p>
+                <p>Title: {musicbrainz.oldest.title}</p>
+                <p>Release: {musicbrainz.oldest.firstReleaseDate}</p>
+                <p>Album: {musicbrainz.oldest.album}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Musicbrainz-Informationen */}
-      {musicbrainz && (
-        <div className="musicbrainz-section">
-          <h2>Musicbrainz Result</h2>
-          {musicbrainz.top.map((item, index) => (
-            <div key={index} className="musicbrainz-result">
-              <p>Artist: {item.artist}</p>
-              <p>Title: {item.title}</p>
-              <p>Release: {item.firstReleaseDate}</p>
-              <p>Album: {item.album}</p>
-            </div>
-          ))}
-          <hr />
-          <div className="musicbrainz-oldest">
-            <h3>Oldest Release</h3>
-            <p>Artist: {musicbrainz.oldest.artist}</p>
-            <p>Title: {musicbrainz.oldest.title}</p>
-            <p>Release: {musicbrainz.oldest.firstReleaseDate}</p>
-            <p>Album: {musicbrainz.oldest.album}</p>
+      {loading && (
+        <div className="wait-screen" style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(255,255,255,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div>
+            <h2>Bitte warten...</h2>
+            <div className="spinner" />
           </div>
-        </div>
-      )}
-
-      {/* MidiPlayer */}
-      {soundfont && midiData && (
-        <div className="player-section">
-          <MidiPlayer
-            midiData={midiData.data}
-            soundfont={soundfont}
-          />
         </div>
       )}
     </div>

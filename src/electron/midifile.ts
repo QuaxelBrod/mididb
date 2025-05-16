@@ -41,7 +41,7 @@ export class MidiFile {
                 let  midiRawData = fs.readFileSync(midi_path);
                 let ret = new MidiFile();
                 ret.filePath = midi_path;
-                ret.fileName = path.basename(midi_path);
+                ret.fileName = path.basename(midi_path, path.extname(midi_path));
                 ret.fullPath = path.dirname(midi_path);
                 ret.fileDir = path.basename(ret.fullPath);
                 ret.fileExt = path.extname(midi_path);

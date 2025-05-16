@@ -12,7 +12,6 @@ declare global {
   interface IMidiParser {
     header: MidiHeader | null = null;
     tracks: MidiTrack[] = [];
-
     copyrightNotice: Array<string> = [];
     trackName: Array<string> = [];
     instrumentName: Array<string> = [];
@@ -41,12 +40,14 @@ declare global {
   }
 
   interface IMusicbrainzResponseEntry {
-    artist?: string | null;
     title?: string | null;
+    titleId?: string | null;
+    artist?: string | null;
     artistId?: string | null;
     firstReleaseDate?: string | null;
     album?: string | null;
     text?: string | null;
+    tags?: Array<{name:string, count:number}> | null;
   }
 
   interface IMusicbrainzResponse {
@@ -59,6 +60,7 @@ declare global {
     musicLLM: IMusicLLM_softsearch_result | null;
     musicbrainz: IMusicbrainzResponse | null;
   }
+
 
   interface Window {
     electron: {

@@ -46,7 +46,7 @@ export class MidiParser {
     toJson() {
         return {
             header: this.header,
-            tracks: this.tracks,
+            tracks: [],
             copyrightNotice: this.copyrightNotice,
             trackName: this.trackName,
             instrumentName: this.instrumentName,

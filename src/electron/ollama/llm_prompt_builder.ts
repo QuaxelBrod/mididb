@@ -1,4 +1,7 @@
+import fs from 'fs';
 
+const instruments = fs.readFileSync("./src/electron/ollama/instruments.txt", "utf-8");
+const instrumentList = instruments.split('\n').map(line => line.trim().toLowerCase());
 
 export function getLLMUserPrompt(midifile: ILoadMidiFile): string {
     let prompt = "Wich song you would choose with this information:\n";
@@ -9,7 +12,10 @@ export function getLLMUserPrompt(midifile: ILoadMidiFile): string {
             prompt += `Song has this copyright notice: ${midifile.midiParser.copyrightNotice.join(", ")}\n`;
         }
         if (midifile.midiParser.trackName?.length > 0) {
-            prompt += `Song has this track name: ${midifile.midiParser.trackName.join(", ")}\n`;
+            const filteredTrackNames = midifile.midiParser.trackName.filter((name: string) => !instrumentList.includes(name.toLocaleLowerCase()));
+            if (filteredTrackNames.length > 0) {
+                prompt += `Song has this additional text (wich may be instruments): ${midifile.midiParser.trackName.join(", ")}\n`;
+            }
         }
         if (midifile.midiParser.lyrics?.length > 0) {
             prompt += `Song has this lyrics: ${midifile.midiParser.lyrics.join(", ")}\n`;

@@ -1,3 +1,4 @@
+import { get } from 'http';
 import { MusicBrainzApi } from 'musicbrainz-api';
 import { title } from 'process';
 
@@ -77,39 +78,64 @@ function getTopNArtistsWithOldest(list: any, n = 3) {
     const artistMap: any = {};
     for (const entry of list) {
         if (!entry.artist) continue;
-        if (!artistMap[entry.artist]) {
-            artistMap[entry.artist] = {
+        // Vergleiche Künstlernamen case-insensitive
+        const artistKey = entry.artist.toLowerCase();
+        if (!artistMap[artistKey]) {
+            artistMap[artistKey] = {
                 title: entry.title,
+                titleId: entry.titleId || null,
                 artist: entry.artist,
                 artistId: entry.artistId || null,
                 count: 1,
-                firstReleaseDate: entry.firstReleaseDate || null
+                firstReleaseDate: entry.firstReleaseDate || null,
+                tags: entry.tags ? [...entry.tags] : [],
             };
         } else {
-            artistMap[entry.artist].count += 1;
+            artistMap[artistKey].count += 1;
+            // Tags übertragen und Counts aktualisieren
+            if (entry.tags && Array.isArray(entry.tags)) {
+                const tagMap = new Map<string, number>();
+                // Bestehende Tags in Map übernehmen
+                for (const t of artistMap[artistKey].tags) {
+                    tagMap.set(t.name, t.count);
+                }
+                // Neue Tags einfügen oder Count aktualisieren
+                for (const t of entry.tags) {
+                    if (!tagMap.has(t.name) || t.count > tagMap.get(t.name)!) {
+                        tagMap.set(t.name, t.count);
+                    }
+                }
+                // Map zurück in Array
+                artistMap[artistKey].tags = Array.from(tagMap, ([name, count]) => ({ name, count }));
+            }
             // Vergleiche und setze das früheste Release-Datum
             if (
                 entry.firstReleaseDate &&
-                (!artistMap[entry.artist].firstReleaseDate ||
-                    entry.firstReleaseDate < artistMap[entry.artist].firstReleaseDate)
+                (!artistMap[artistKey].firstReleaseDate ||
+                    entry.firstReleaseDate < artistMap[artistKey].firstReleaseDate)
             ) {
-                artistMap[entry.artist].firstReleaseDate = entry.firstReleaseDate;
+                artistMap[artistKey].firstReleaseDate = entry.firstReleaseDate;
             }
         }
     }
 
     const sorted = Object.values(artistMap).sort((a: any, b: any) => b.count - a.count);
-    const top = sorted.slice(0, n);
+    const top = <Array<IMusicbrainzResponseEntry>>sorted.slice(0, n);
 
     // Finde den Eintrag mit dem ältesten (kleinsten) firstReleaseDate
     const withDate = Object.values(artistMap).filter((a: any) => a.firstReleaseDate);
-    let oldest = null;
+    let oldest: IMusicbrainzResponseEntry | null = null;
     if (withDate.length > 0) {
-        oldest = withDate.reduce((min: any, curr: any) =>
+        oldest = <IMusicbrainzResponseEntry>withDate.reduce((min: any, curr: any) =>
             curr.firstReleaseDate < min.firstReleaseDate ? curr : min
         );
     }
-
+    top.forEach((t: any) => {
+        t.tags = getTop3TagsByCount(t.tags);
+    });
+    if (oldest) {
+        oldest.tags = getTop3TagsByCount(oldest.tags);
+    }
     return { top, oldest };
 }
 
@@ -131,13 +157,23 @@ function extractTitleArtistScore(json: any) {
 
         return {
             title: rec.title,
+            titleId: rec.id || null,
             artist: artist,
             artistId: artistId,
-            score: rec.score,
             firstReleaseDate: rec["first-release-date"] || null,
+            tags: rec.tags ? [...rec.tags] : [],
+            id: rec.id,
         };
     });
 }
+
+function getTop3TagsByCount(list: any) {
+    return list
+        .sort((a: any, b: any) => b.count - a.count)
+        .slice(0, 3);
+}
+
+
 
 
 export async function getTopListForParams(params: IMusicbrainzRequestParams, n = 3) {
@@ -157,15 +193,22 @@ export async function getTopListForParams(params: IMusicbrainzRequestParams, n =
         query_string_array.push(`album:"${params.album}"`);
     }
     if (query_string_array.length === 0) return [];
-    
+
     let query_string = query_string_array.join(' AND ').trim();
     console.log('query_string:', query_string);
-    const result = await mbApi.search('recording', {
+    let result = await mbApi.search('recording', {
         query: query_string,
         limit: 100
     });
+    if (result.recordings.length === 0) {
+        // send only with recording
+        result = await mbApi.search('recording', {
+            query: `recording:"${params.title}"`,
+            limit: 100
+        });
+    };
 
-    const list = extractTitleArtistScore(result);
+    let list = extractTitleArtistScore(result);
     let ret: any = getTopNArtistsWithOldest(list, n);
     return ret;
 }

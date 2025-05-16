@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "ES6",
     "allowJs": true,
-    //"module": "commonjs",
     "module": "ESNext",
     "jsx": "react-jsx",
     "strict": true,
@@ -19,5 +18,6 @@
       "*": ["node_modules/*"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["db_old/**/*"]
 }
