@@ -7,13 +7,18 @@ import MidiPlayer from './Midiplayer';
 
 const MidiDB: React.FC = () => {
   const [midiData, setMidiData] = useState<ILoadMidiFile | null>(null);
+  const [musicLLM, setMusicLLM] = useState<IMusicLLM_softsearch_result | null>(null);
   const [soundfont, setSoundfont] = useState<ArrayBuffer | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const loadMidiFile = async () => {
+    setLoading(true);
     const data = await window.electron.openMidiFile();
     if (data) {
-      setMidiData(data); // data ist bereits ein ArrayBuffer
+      setMidiData(data.midifile); // data ist bereits ein ArrayBuffer
+      setMusicLLM(data.musicLLM);
     }
+    setLoading(false);
   };
 
   // Beispiel in deiner Komponente
@@ -38,23 +43,56 @@ const MidiDB: React.FC = () => {
       <button onClick={loadMidiFile}>Open MIDI File</button>
       {/* <button onClick={loadSoundfont}>Load Soundfont</button> */}
 
-      {midiData && (
-        <div className="main-content">
-          <div className="metadata-section">
-            <MetadataView midiData={midiData} />
+{loading && (
+        <div className="wait-screen" style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(255,255,255,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div>
+            <h2>Bitte warten...</h2>
+            <div className="spinner" />
           </div>
+        </div>
+      )}
 
-          {soundfont && (
-            <div className="player-section">
-              <MidiPlayer
-                midiData={midiData.data}
-                soundfont={soundfont} // Hier den Soundfont-Pfad angeben
-              />
-            </div>
-          )}
+      <div className="main-content" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+      {/* MIDI-Informationen */}
+      {midiData && (
+        <div className="metadata-section" style={{ flex: 1 }}>
+          <h2>MIDI Informationen</h2>
+          <MetadataView midiData={midiData} />
+        </div>
+      )}
+
+      {/* LLM-Informationen */}
+      {musicLLM && (
+        <div className="music-llm-section" style={{ flex: 1 }}>
+          <h2>Music LLM Result</h2>
+          <div className="music-llm-result">
+            <p>Text: {musicLLM.text}</p>
+            <p>Artist: {musicLLM.artist}</p>
+            <p>Title: {musicLLM.title}</p>
+            <p>Release: {musicLLM.release}</p>
+            <p>Album: {musicLLM.album}</p>
+          </div>
         </div>
       )}
     </div>
+
+    {soundfont && midiData && (
+      <div className="player-section">
+        <MidiPlayer
+          midiData={midiData.data}
+          soundfont={soundfont}
+        />
+      </div>
+    )}
+  </div>
   );
 };
 

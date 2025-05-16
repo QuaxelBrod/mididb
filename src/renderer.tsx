@@ -43,3 +43,7 @@ if (rootElement) {
   console.error("Root element not found");
 }
 
+window.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  document.execCommand('copy');
+});

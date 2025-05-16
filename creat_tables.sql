@@ -1,6 +1,6 @@
 PRAGMA foreign_keys = ON;
 
-CREATE TABLE "midi_file" (
+CREATE TABLE IF NOT EXISTS "midi_file" (
     "id" INTEGER PRIMARY KEY,
     "length" TEXT,
     "nr_tracks" INTEGER,
@@ -12,37 +12,38 @@ CREATE TABLE "midi_file" (
     FOREIGN KEY ("signature") REFERENCES "signatures"("signature")
 );
 
-CREATE TABLE "midi_data" (
+CREATE TABLE IF NOT EXISTS "midi_data" (
     "id" INTEGER PRIMARY KEY,
-    "data" BLOB
+    "data" BLOB,
+    "hash" TEXT UNIQUE
 );
 
-CREATE TABLE "titel" (
+CREATE TABLE IF NOT EXISTS "titel" (
     "id" INTEGER PRIMARY KEY,
     "titel" TEXT
 );
 
-CREATE TABLE "stil" (
+CREATE TABLE IF NOT EXISTS "stil" (
     "id" INTEGER PRIMARY KEY,
     "name" TEXT
 );
 
-CREATE TABLE "genere" (
+CREATE TABLE IF NOT EXISTS "genere" (
     "id" INTEGER PRIMARY KEY,
     "name" TEXT NOT NULL
 );
 
-CREATE TABLE "interpret" (
+CREATE TABLE IF NOT EXISTS "interpret" (
     "id" INTEGER PRIMARY KEY,
     "name" TEXT NOT NULL,
     "geschichte" TEXT
 );
 
-CREATE TABLE "signatures" (
+CREATE TABLE IF NOT EXISTS "signatures" (
     "signature" TEXT PRIMARY KEY
 );
 
-CREATE TABLE "map_data" (
+CREATE TABLE IF NOT EXISTS "map_data" (
     "midi_file" INTEGER NOT NULL,
     "data" INTEGER NOT NULL,
     PRIMARY KEY ("midi_file", "data"),
@@ -50,7 +51,7 @@ CREATE TABLE "map_data" (
     FOREIGN KEY ("midi_file") REFERENCES "titel"("id")
 );
 
-CREATE TABLE "map_versions" (
+CREATE TABLE IF NOT EXISTS "map_versions" (
     "version_data" INTEGER NOT NULL,
     "midi_file" INTEGER NOT NULL,
     PRIMARY KEY ("version_data", "midi_file"),
@@ -58,7 +59,7 @@ CREATE TABLE "map_versions" (
     FOREIGN KEY ("midi_file") REFERENCES "midi_data"("id")
 );
 
-CREATE TABLE "map_interpret" (
+CREATE TABLE IF NOT EXISTS "map_interpret" (
     "midi_file" INTEGER NOT NULL,
     "interpret" INTEGER NOT NULL,
     PRIMARY KEY ("midi_file", "interpret"),
@@ -66,7 +67,7 @@ CREATE TABLE "map_interpret" (
     FOREIGN KEY ("interpret") REFERENCES "interpret"("id")
 );
 
-CREATE TABLE "map_genere" (
+CREATE TABLE IF NOT EXISTS "map_genere" (
     "midi_file" INTEGER NOT NULL,
     "genere" INTEGER NOT NULL,
     PRIMARY KEY ("midi_file", "genere"),
@@ -74,7 +75,7 @@ CREATE TABLE "map_genere" (
     FOREIGN KEY ("midi_file") REFERENCES "midi_file"("id")
 );
 
-CREATE TABLE "map_stil" (
+CREATE TABLE IF NOT EXISTS "map_stil" (
     "midi_file" INTEGER NOT NULL,
     "stil" INTEGER NOT NULL,
     PRIMARY KEY ("midi_file", "stil"),

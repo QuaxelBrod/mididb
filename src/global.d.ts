@@ -1,6 +1,13 @@
 export { };
 
 declare global {
+  interface IMusicLLM_softsearch_result {
+    artist?: string,
+    title?: string,
+    release?: string,
+    album?: string,
+    text?: string
+}
 
   interface IMidiParser {
     header: MidiHeader | null = null;
@@ -22,12 +29,18 @@ declare global {
     fileDir: string,
     fileExt: string,
     data: ArrayBuffer | null,
+    hash: string | null,
     midiParser: IMidiParser | null;
   };
 
+  interface IMidiFileInformation {
+    midifile: ILoadMidiFile | null;
+    musicLLM: IMusicLLM_softsearch_result | null;
+  }
+
   interface Window {
     electron: {
-      openMidiFile: () => Promise<ILoadMidiFile>;
+      openMidiFile: () => Promise<IMidiFileInformation>;
       loadSoundfont: (path: string) => Promise<ArrayBuffer>;
     };
   }

@@ -27,6 +27,11 @@ class Database {
         });
     }
 
+    /**
+     * Initialisiert die Datenbanktabellen, indem sie die SQL-Befehle aus einer Datei ausführt.
+     * 
+     * @returns Promise<boolean> - true, wenn die Tabellen erfolgreich initialisiert wurden, sonst false.
+     */
     async initializeTables(): Promise<boolean> {
         try {
             // Read the SQL file using a Promise-based approach
@@ -51,11 +56,44 @@ class Database {
         }
     }
 
+    /**
+     * Gibt den Status der Datenbankverbindung zurück.
+     * 
+     * @returns boolean - true, wenn die Datenbank initialisiert ist, sonst false.
+     */
     isInitialized(): boolean {
         return this.initialized;
     }
 
+    /**
+     * Prüft, ob ein MIDI-Hash bereits in der Datenbank vorhanden ist.
+     * Gibt die ID des Eintrags zurück, falls vorhanden, sonst null.
+     * 
+     * @param hash - Der zu prüfende Hashwert der MIDI-Daten.
+     * @returns Promise<number | null> - Die ID des vorhandenen Eintrags oder null, falls nicht gefunden.
+     */
+    async isHashInDB(hash: string): Promise<number | null> {
+        return new Promise((resolve, reject) => {
+            this.db.get(
+                "SELECT id FROM midi_data WHERE hash = ?",
+                [hash],
+                (err: any, row: any) => {
+                    if (err) {
+                        console.error('Error querying hash:', err.message);
+                        reject(err);
+                    } else if (row && row.id !== undefined) {
+                        resolve(row.id);
+                    } else {
+                        resolve(null);
+                    }
+                }
+            );
+        });
+    }
 
+    /**
+     * Schließt die Datenbankverbindung.
+     */
     close() {
         this.db.close((err: any) => {
             if (err) {
