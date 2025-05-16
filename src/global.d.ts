@@ -33,9 +33,31 @@ declare global {
     midiParser: IMidiParser | null;
   };
 
+  interface IMusicbrainzRequestParams {
+    artist?: string | null;
+    title?: string | null;
+    release?: string | null;
+    album?: string | null;
+  }
+
+  interface IMusicbrainzResponseEntry {
+    artist?: string | null;
+    title?: string | null;
+    artistId?: string | null;
+    firstReleaseDate?: string | null;
+    album?: string | null;
+    text?: string | null;
+  }
+
+  interface IMusicbrainzResponse {
+    top: Array<IMusicbrainzResponseEntry>;
+    oldest: IMusicbrainzResponseEntry;
+  }
+
   interface IMidiFileInformation {
     midifile: ILoadMidiFile | null;
     musicLLM: IMusicLLM_softsearch_result | null;
+    musicbrainz: IMusicbrainzResponse | null;
   }
 
   interface Window {

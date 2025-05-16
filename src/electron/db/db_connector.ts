@@ -11,6 +11,11 @@ const sqlFilePath = path.join(__dirname, "../..", "creat_tables.sql");
 //const sqlInitScript = require("creat_tables.sql");
 
 
+/**
+"validated" INTEGER : 0: not validated, 1: validated : 3 needs review
+ */
+
+
 class Database {
     private db: any;
     private initialized: boolean = false;

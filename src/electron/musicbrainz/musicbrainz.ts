@@ -1,4 +1,5 @@
 import { MusicBrainzApi } from 'musicbrainz-api';
+import { title } from 'process';
 
 
 const config = {
@@ -22,10 +23,10 @@ const config = {
 
 const mbApi = new MusicBrainzApi(config);
 
-function getTopNArtists_1(list, n = 3) {
+function getTopNArtists_1(list: any, n = 3) {
     if (!Array.isArray(list) || list.length === 0) return [];
 
-    const countMap = {};
+    const countMap: any = {};
     for (const entry of list) {
         if (!entry.artist) continue;
         countMap[entry.artist] = (countMap[entry.artist] || 0) + 1;
@@ -34,14 +35,14 @@ function getTopNArtists_1(list, n = 3) {
     // Erzeuge sortierte Liste mit Artist und Count
     return Object.entries(countMap)
         .map(([artist, count]) => ({ artist, count }))
-        .sort((a, b) => b.count - a.count)
+        .sort((a: any, b: any) => b.count - a.count)
         .slice(0, n);
 }
 
-function getTopNArtists_2(list, n = 3) {
+function getTopNArtists_2(list: any, n = 3) {
     if (!Array.isArray(list) || list.length === 0) return [];
 
-    const artistMap = {};
+    const artistMap: any = {};
     for (const entry of list) {
         if (!entry.artist) continue;
         if (!artistMap[entry.artist]) {
@@ -66,18 +67,19 @@ function getTopNArtists_2(list, n = 3) {
 
     // Sortiere nach Häufigkeit absteigend und gib die Top-N Artists zurück
     return Object.values(artistMap)
-        .sort((a, b) => b.count - a.count)
+        .sort((a: any, b: any) => b.count - a.count)
         .slice(0, n);
 }
 
-function getTopNArtistsWithOldest(list, n = 3) {
+function getTopNArtistsWithOldest(list: any, n = 3) {
     if (!Array.isArray(list) || list.length === 0) return { top: [], oldest: null };
 
-    const artistMap = {};
+    const artistMap: any = {};
     for (const entry of list) {
         if (!entry.artist) continue;
         if (!artistMap[entry.artist]) {
             artistMap[entry.artist] = {
+                title: entry.title,
                 artist: entry.artist,
                 artistId: entry.artistId || null,
                 count: 1,
@@ -96,14 +98,14 @@ function getTopNArtistsWithOldest(list, n = 3) {
         }
     }
 
-    const sorted = Object.values(artistMap).sort((a, b) => b.count - a.count);
+    const sorted = Object.values(artistMap).sort((a: any, b: any) => b.count - a.count);
     const top = sorted.slice(0, n);
 
     // Finde den Eintrag mit dem ältesten (kleinsten) firstReleaseDate
-    const withDate = Object.values(artistMap).filter(a => a.firstReleaseDate);
+    const withDate = Object.values(artistMap).filter((a: any) => a.firstReleaseDate);
     let oldest = null;
     if (withDate.length > 0) {
-        oldest = withDate.reduce((min, curr) =>
+        oldest = withDate.reduce((min: any, curr: any) =>
             curr.firstReleaseDate < min.firstReleaseDate ? curr : min
         );
     }
@@ -111,10 +113,10 @@ function getTopNArtistsWithOldest(list, n = 3) {
     return { top, oldest };
 }
 
-function extractTitleArtistScore(json) {
+function extractTitleArtistScore(json: any) {
     if (!json || !Array.isArray(json.recordings)) return [];
 
-    return json.recordings.map(rec => {
+    return json.recordings.map((rec: any) => {
         // Erster Artist-Name und Artist-ID aus artist-credit
         let artist = "Unknown";
         let artistId = null;
@@ -137,19 +139,50 @@ function extractTitleArtistScore(json) {
     });
 }
 
-(async () => {
 
-    // let result = await mbApi.lookup('artist', 'ab2528d9-719f-4261-8098-21849222a0f2', ['recordings']);
-    //console.log(result);
+export async function getTopListForParams(params: IMusicbrainzRequestParams, n = 3) {
+    if (!params || !params.title) return [];
 
-    let result = await mbApi.search('recording', {
-        query: 'Bohemian Rhapsody',
+    let query_string_array: Array<string> = [];
+    if (params.title) {
+        query_string_array.push(`recording:"${params.title}"`);
+    }
+    if (params.artist) {
+        query_string_array.push(`artist:"${params.artist}"`);
+    }
+    if (params.release) {
+        query_string_array.push(`release:"${params.release}"`);
+    }
+    if (params.album) {
+        query_string_array.push(`album:"${params.album}"`);
+    }
+    if (query_string_array.length === 0) return [];
+    
+    let query_string = query_string_array.join(' AND ').trim();
+    console.log('query_string:', query_string);
+    const result = await mbApi.search('recording', {
+        query: query_string,
         limit: 100
     });
 
     const list = extractTitleArtistScore(result);
-    console.log(getTopNArtistsWithOldest(list, 3));
+    let ret: any = getTopNArtistsWithOldest(list, n);
+    return ret;
+}
+
+// (async () => {
+
+//     // let result = await mbApi.lookup('artist', 'ab2528d9-719f-4261-8098-21849222a0f2', ['recordings']);
+//     //console.log(result);
+
+//     let result = await mbApi.search('recording', {
+//         query: 'Bohemian Rhapsody',
+//         limit: 100
+//     });
+
+//     const list = extractTitleArtistScore(result);
+//     console.log(getTopNArtistsWithOldest(list, 3));
 
 
 
-})();
+// })();

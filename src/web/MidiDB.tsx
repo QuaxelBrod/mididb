@@ -8,6 +8,7 @@ import MidiPlayer from './Midiplayer';
 const MidiDB: React.FC = () => {
   const [midiData, setMidiData] = useState<ILoadMidiFile | null>(null);
   const [musicLLM, setMusicLLM] = useState<IMusicLLM_softsearch_result | null>(null);
+  const [musicbrainz, setMusicbrainz] = useState<IMusicbrainzResponse | null>(null);
   const [soundfont, setSoundfont] = useState<ArrayBuffer | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -17,6 +18,7 @@ const MidiDB: React.FC = () => {
     if (data) {
       setMidiData(data.midifile); // data ist bereits ein ArrayBuffer
       setMusicLLM(data.musicLLM);
+      setMusicbrainz(data.musicbrainz);
     }
     setLoading(false);
   };
@@ -43,7 +45,7 @@ const MidiDB: React.FC = () => {
       <button onClick={loadMidiFile}>Open MIDI File</button>
       {/* <button onClick={loadSoundfont}>Load Soundfont</button> */}
 
-{loading && (
+      {loading && (
         <div className="wait-screen" style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
@@ -61,38 +63,62 @@ const MidiDB: React.FC = () => {
       )}
 
       <div className="main-content" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-      {/* MIDI-Informationen */}
-      {midiData && (
-        <div className="metadata-section" style={{ flex: 1 }}>
-          <h2>MIDI Informationen</h2>
-          <MetadataView midiData={midiData} />
-        </div>
-      )}
+        {/* MIDI-Informationen */}
+        {midiData && (
+          <div className="metadata-section" style={{ flex: 1 }}>
+            <h2>MIDI Informationen</h2>
+            <MetadataView midiData={midiData} />
+          </div>
+        )}
 
-      {/* LLM-Informationen */}
-      {musicLLM && (
-        <div className="music-llm-section" style={{ flex: 1 }}>
-          <h2>Music LLM Result</h2>
-          <div className="music-llm-result">
-            <p>Text: {musicLLM.text}</p>
-            <p>Artist: {musicLLM.artist}</p>
-            <p>Title: {musicLLM.title}</p>
-            <p>Release: {musicLLM.release}</p>
-            <p>Album: {musicLLM.album}</p>
+        {/* LLM-Informationen */}
+        {musicLLM && (
+          <div className="music-llm-section" style={{ flex: 1 }}>
+            <h2>Music LLM Result</h2>
+            <div className="music-llm-result">
+              <p>Text: {musicLLM.text}</p>
+              <p>Artist: {musicLLM.artist}</p>
+              <p>Title: {musicLLM.title}</p>
+              <p>Release: {musicLLM.release}</p>
+              <p>Album: {musicLLM.album}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Musicbrainz-Informationen */}
+      {musicbrainz && (
+        <div className="musicbrainz-section">
+          <h2>Musicbrainz Result</h2>
+          {musicbrainz.top.map((item, index) => (
+            <div key={index} className="musicbrainz-result">
+              <p>Artist: {item.artist}</p>
+              <p>Title: {item.title}</p>
+              <p>Release: {item.firstReleaseDate}</p>
+              <p>Album: {item.album}</p>
+            </div>
+          ))}
+          <hr />
+          <div className="musicbrainz-oldest">
+            <h3>Oldest Release</h3>
+            <p>Artist: {musicbrainz.oldest.artist}</p>
+            <p>Title: {musicbrainz.oldest.title}</p>
+            <p>Release: {musicbrainz.oldest.firstReleaseDate}</p>
+            <p>Album: {musicbrainz.oldest.album}</p>
           </div>
         </div>
       )}
-    </div>
 
-    {soundfont && midiData && (
-      <div className="player-section">
-        <MidiPlayer
-          midiData={midiData.data}
-          soundfont={soundfont}
-        />
-      </div>
-    )}
-  </div>
+      {/* MidiPlayer */}
+      {soundfont && midiData && (
+        <div className="player-section">
+          <MidiPlayer
+            midiData={midiData.data}
+            soundfont={soundfont}
+          />
+        </div>
+      )}
+    </div>
   );
 };
 
