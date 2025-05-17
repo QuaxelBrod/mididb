@@ -18,7 +18,7 @@ export function getLLMUserPrompt(midifile: ILoadMidiFile): string {
             }
         }
         if (midifile.midiParser.lyrics?.length > 0) {
-            prompt += `Song has this lyrics: ${midifile.midiParser.lyrics.join(", ")}\n`;
+            prompt += `Song has this lyrics: ${midifile.midiParser.lyrics.join(" ")}\n`;
         }
     }
     const regex = /[\w.-]+@[\w.-]+\.[A-Z|a-z]{2,}/g; // Regulärer Ausdruck für E-Mail-Adressen

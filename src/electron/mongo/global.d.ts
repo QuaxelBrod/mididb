@@ -1,4 +1,5 @@
 export interface IDBMidiDocument {
+  validationState: string;
   midifile: {
     filePath: string;
     fileName: string;

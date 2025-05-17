@@ -56,6 +56,7 @@ declare global {
   }
 
   interface IMidiFileInformation {
+    validationState: string;
     midifile: ILoadMidiFile | null;
     musicLLM: IMusicLLM_softsearch_result | null;
     musicbrainz: IMusicbrainzResponse | null;

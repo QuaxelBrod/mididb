@@ -18,20 +18,66 @@ If you don't know the answer, say "".
 If you are not able to find an matching song return {}
 `;
 
+function lazyParseJson(text: string): any {
+    // Entferne Zeilenumbrüche am Anfang/Ende
+    let fixed = text.trim();
+
+    // Ersetze einzelne Anführungszeichen nach Doppelpunkt durch doppelte Anführungszeichen
+    fixed = fixed.replace(/:\s*'([^']*)'/g, (m, p1) => ': "' + p1.replace(/"/g, '\\"') + '"');
+
+    // Ersetze nicht-escaped doppelte Anführungszeichen in Werten (z.B. bei Weird Al" Yankovic)
+    fixed = fixed.replace(/:\s*"([^"]*?)"([^,\}\n]*)/g, (m, val, rest) => {
+        // Wenn im Wert ein unescaped " vorkommt, ersetze es durch '
+        const safeVal = val.replace(/"/g, "'");
+        return ': "' + safeVal + '"' + rest;
+    });
+
+    // Ersetze numerische Schlüssel ohne Anführungszeichen durch Strings
+    //fixed = fixed.replace(/(\s|{|,)(\d+)\s*:/g, (m, pre, num) => `${pre}"${num}":`);
+    // Entferne numerische Schlüssel samt Wert (z.B. 00: "irgendwas",)
+    fixed = fixed.replace(/(\s|{|,)\d+\s*:\s*("[^"]*"|'[^']*'|[^\s,}]+)\s*(,?)/g, (m, pre, val, comma) => pre.trim() === '{' ? pre : (comma ? pre : ''));
+
+    // Ersetze einzelne Anführungszeichen in Schlüsseln (optional)
+    fixed = fixed.replace(/'([^']+)':/g, '"$1":');
+
+    // Entferne Komma vor schließender geschweifter Klammer (letztes Property)
+    fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+
+    // Versuche zu parsen
+    try {
+        return JSON.parse(fixed);
+    } catch (e:any) {
+        console.error("Kann nicht parsen:", e.message, "\nInput war:\n", fixed);
+        return null;
+    }
+}
+
+
 function extractJSON(text: string) {
-    const match = text.match(/{[\s\S]*}/);
-    if (match) {
+    const matches = text.match(/{[\s\S]*?}/g);
+    if (matches && matches.length > 0) {
+        const last = matches[matches.length - 1];
         try {
-            return JSON.parse(match[0].replace(/\\'/g, "'"));
-        } catch (e) {
+            return JSON.parse(last.replace(/\\'/g, "'"));
+        } catch (e:any) {
             console.log("Error parsing chat result:\n", text);
-            console.error("Ungültiges JSON:", e);
+            console.error("Ungültiges JSON:", e.message);
+            console.log("Versuche lazyParseJson");
+            const lazyParsed = lazyParseJson(last);
+            if (lazyParsed) {
+                console.log("Lazy parsed JSON:", lazyParsed);
+                return lazyParsed;
+            }
+            //console.error("Kann nicht parsen:", e, "\nInput war:\n", last);
+            return null;
         }
     }
     return null;
 }
 
-let MODEL = "llama3.1:8b";
+//let MODEL = "llama3.1:8b";
+let MODEL = "llama3.2:3b";
+//let MODEL = "gemma3:1b";
 
 class MusicLLM {
 

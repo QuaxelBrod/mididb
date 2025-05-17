@@ -58,3 +58,23 @@ export async function searchMidiDocuments(query: object) {
   const results = await collection.find(query).toArray();
   return results;
 }
+
+/**
+ * Prüft, ob ein bestimmter Hash bereits in der Datenbank existiert.
+ * @param hash - Der zu prüfende Hashwert.
+ * @returns true, wenn der Hash existiert, sonst false.
+ */
+export async function isHashInDatabase(hash: string): Promise<boolean> {
+  const result = await collection.findOne({ "midifile.hash": hash });
+  if (result) {
+    if (result.validationState === undefined) {
+      // Setze validationState auf 'unknown' und schreibe das Dokument zurück
+      await collection.updateOne(
+        { _id: result._id },
+        { $set: { validationState: 'unknown' } }
+      );
+    }
+    return true;
+  }
+  return !!result;
+}
