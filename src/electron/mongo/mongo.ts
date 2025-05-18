@@ -1,6 +1,7 @@
 // MongoDB-Implementierung für dein Dokument
 import { MongoClient, Collection, Document } from "mongodb";
 import { IDBMidiDocument } from "./global";
+import { MidiFile } from "../midifile";
 
 const uri = "mongodb://localhost:27017";
 const dbName = "mididb";
@@ -67,13 +68,13 @@ export async function searchMidiDocuments(query: object) {
 export async function isHashInDatabase(hash: string): Promise<boolean> {
   const result = await collection.findOne({ "midifile.hash": hash });
   if (result) {
-    if (result.validationState === undefined) {
-      // Setze validationState auf 'unknown' und schreibe das Dokument zurück
-      await collection.updateOne(
-        { _id: result._id },
-        { $set: { validationState: 'unknown' } }
-      );
-    }
+    // if (result.validationState === undefined) {
+    //   // Setze validationState auf 'unknown' und schreibe das Dokument zurück
+    //   await collection.updateOne(
+    //     { _id: result._id },
+    //     { $set: { validationState: 'unknown' } }
+    //   );
+    // }
     return true;
   }
   return !!result;

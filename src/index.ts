@@ -227,6 +227,7 @@ async function parseDirectory(directory: string): Promise<void> {
                 doubles++;
                 console.log('Hash already in database:', midiPath);
             }
+            midiInfo = null;
         }
         catch (err) {
             errorFiles++;
@@ -234,6 +235,7 @@ async function parseDirectory(directory: string): Promise<void> {
             fs.appendFileSync('error.log', `Fehler bei Datei ${midiPath}:\n ${err}\n\n\n`);
         }
         const duration = Date.now() - start;
+        console.log('\nHeap used:', Math.round(process.memoryUsage().heapUsed / 1024 / 1024), 'MB');
         console.error(`Midifile parsing/saving Dauer: \t\t${duration} ms`);
         console.error(`Verarbeitet: ${processedFiles}, Eingefügt: ${insertedFiles}, Fehler: ${errorFiles}, Duplikate: ${doubles}`);
     }

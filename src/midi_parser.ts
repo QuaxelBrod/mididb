@@ -38,9 +38,13 @@ export class MidiParser {
     tempo: Array<number> = [];
     signature: Array<string> = [];
 
-    constructor(data: Uint8Array) {
+    constructor(data: Uint8Array | null) {
+        if (data === null) 
+            throw new Error('MidiParser: No data provides');
+        
         //this.data = data;
         this.parse(data);
+        data = null
     }
 
     toJson() {
