@@ -211,9 +211,10 @@ async function parseDirectory(directory: string): Promise<void> {
     let errorFiles = 0;
     let doubles = 0;
     for (const midiPath of midiFiles) {
+        const start = Date.now();
         try {
             processedFiles++;
-            const midiInfo = await readMidiFile(midiPath);
+            let midiInfo = await readMidiFile(midiPath);
             if (midiInfo) {
                 let dbres = await saveMidiDocument(<IDBMidiDocument>midiInfo);
                 if (dbres === null) {
@@ -222,12 +223,18 @@ async function parseDirectory(directory: string): Promise<void> {
                     insertedFiles++;
                 }
             }
+            else {
+                doubles++;
+                console.log('Hash already in database:', midiPath);
+            }
         }
         catch (err) {
             errorFiles++;
             console.error(`Fehler bei Datei ${midiPath}:`, err);
             fs.appendFileSync('error.log', `Fehler bei Datei ${midiPath}:\n ${err}\n\n\n`);
         }
+        const duration = Date.now() - start;
+        console.error(`Midifile parsing/saving Dauer: \t\t${duration} ms`);
         console.error(`Verarbeitet: ${processedFiles}, Eingefügt: ${insertedFiles}, Fehler: ${errorFiles}, Duplikate: ${doubles}`);
     }
     console.log(`Verarbeitet: ${processedFiles}, Eingefügt: ${insertedFiles}, Fehler: ${errorFiles}, Duplikate: ${doubles}`);
@@ -271,23 +278,23 @@ async function readMidiFile(filePath: string, checkDB: boolean = true): Promise<
         // check data with ollama
         let musicllm = null;
         if (midifile) {
-            const start = Date.now();
+            //const start = Date.now();
             musicllm = await MusicLLMinstance.soft_search(getLLMUserPrompt(midifile.toJSON()));
-            const duration = Date.now() - start;
-            console.log(`MusicLLMinstance.soft_search Dauer: ${duration} ms`);
+            //const duration = Date.now() - start;
+            //console.log(`MusicLLMinstance.soft_search Dauer: ${duration} ms`);
             // musicllm = await MusicLLMinstance.soft_search(getLLMUserPrompt(midifile.toJSON()));
         }
 
-        const start = Date.now();
+        //const start = Date.now();
         // musicbrainz lookup
         let musicbrainz = await getTopListForParams({
-            title: musicllm?.title ? musicllm.title : midifile?.fileName,
+            title: musicllm?.title ? musicllm.title : midifile?.fileName[0],
             artist: musicllm?.artist ? musicllm.artist : null,
             release: musicllm?.release ? musicllm.release : null,
             album: musicllm?.album ? musicllm.album : null
         }, 3);
-        const duration = Date.now() - start;
-        console.log(`getTopListForParams Dauer: ${duration} ms`);
+        //const duration = Date.now() - start;
+        //console.log(`getTopListForParams Dauer: ${duration} ms`);
         //console.log('musicbrainz:', musicbrainz);
 
         if (musicllm && musicbrainz && musicbrainz.top && musicbrainz.top.length > 0) {
