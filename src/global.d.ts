@@ -24,7 +24,7 @@ declare global {
 
   interface ILoadMidiFile {
     filePath: string,
-    fileName: string,
+    fileName: Array<string>,
     fileDir: string,
     fileExt: string,
     data: ArrayBuffer | null,

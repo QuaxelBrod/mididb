@@ -2,7 +2,7 @@ export interface IDBMidiDocument {
   validationState: string;
   midifile: {
     filePath: string;
-    fileName: string;
+    fileName: Array<string>;
     fileDir: string;
     fileExt: string;
     data: any;

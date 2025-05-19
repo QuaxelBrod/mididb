@@ -25,7 +25,7 @@ const MetadataView: React.FC<MetadataViewProps> = ({ midiData }) => {
                 <div>{midiData.filePath}</div>
 
                 <div>File Name:</div>
-                <div>{midiData.fileName}</div>
+                <div>{midiData.fileName.join(", ")}</div>
                 <div>File Directory:</div>
                 <div>{midiData.fileDir}</div>
                 <div>File Extension:</div>

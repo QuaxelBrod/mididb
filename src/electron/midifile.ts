@@ -63,7 +63,7 @@ export class MidiFile {
     toJSON(): ILoadMidiFile {
         return {
             filePath: this.filePath,
-            fileName: this.fileName,
+            fileName: [this.fileName],
             fileDir: this.fileDir,
             fileExt: this.fileExt,
             data: this.midiData,
