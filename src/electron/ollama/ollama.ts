@@ -32,24 +32,42 @@ function lazyParseJson(text: string): any {
         return ': "' + safeVal + '"' + rest;
     });
 
-    // Ersetze numerische Schlüssel ohne Anführungszeichen durch Strings
-    //fixed = fixed.replace(/(\s|{|,)(\d+)\s*:/g, (m, pre, num) => `${pre}"${num}":`);
-    // Entferne numerische Schlüssel samt Wert (z.B. 00: "irgendwas",)
-    fixed = fixed.replace(/(\s|{|,)\d+\s*:\s*("[^"]*"|'[^']*'|[^\s,}]+)\s*(,?)/g, (m, pre, val, comma) => pre.trim() === '{' ? pre : (comma ? pre : ''));
 
-    // Ersetze einzelne Anführungszeichen in Schlüsseln (optional)
-    fixed = fixed.replace(/'([^']+)':/g, '"$1":');
+    // Suche nach den Feldern mit tolerantem Regex (auch einfache Quotes, evtl. Komma am Ende, beliebige Reihenfolge)
+    const artistMatch = text.match(/["']?artist["']?\s*:\s*["']([^"']*)["']?/i);
+    const titleMatch = text.match(/["']?title["']?\s*:\s*["']([^"']*)["']?/i);
+    const albumMatch = text.match(/["']?album["']?\s*:\s*["']([^"']*)["']?/i);
+    // release kann auch ein Datum oder beliebiger Wert sein
+    const releaseMatch = text.match(/["']?release["']?\s*:\s*["']?([^"'\n,}]*)["']?/i);
 
-    // Entferne Komma vor schließender geschweifter Klammer (letztes Property)
-    fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+    return {
+        artist: artistMatch ? artistMatch[1].trim() : null,
+        title: titleMatch ? titleMatch[1].trim() : null,
+        album: albumMatch ? albumMatch[1].trim() : null,
+        release: releaseMatch ? releaseMatch[1].trim() : null,
+    };
 
-    // Versuche zu parsen
-    try {
-        return JSON.parse(fixed);
-    } catch (e:any) {
-        console.error("Kann nicht parsen:", e.message, "\nInput war:\n", fixed);
-        return null;
-    }
+    // // Ersetze numerische Schlüssel ohne Anführungszeichen durch Strings
+    // //fixed = fixed.replace(/(\s|{|,)(\d+)\s*:/g, (m, pre, num) => `${pre}"${num}":`);
+    // // Entferne numerische Schlüssel samt Wert (z.B. 00: "irgendwas",)
+    // fixed = fixed.replace(/(\s|{|,)\d+\s*:\s*("[^"]*"|'[^']*'|[^\s,}]+)\s*(,?)/g, (m, pre, val, comma) => pre.trim() === '{' ? pre : (comma ? pre : ''));
+
+    // // Entferne einzelne numerische Werte ohne Schlüssel (z.B. 1993,)
+    // fixed = fixed.replace(/(\s|{|,)\d+\s*(,)/g, (m, pre, comma) => pre.trim() === '{' ? pre : comma ? pre : '');
+
+    // // Ersetze einzelne Anführungszeichen in Schlüsseln (optional)
+    // fixed = fixed.replace(/'([^']+)':/g, '"$1":');
+
+    // // Entferne Komma vor schließender geschweifter Klammer (letztes Property)
+    // fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+
+    // // Versuche zu parsen
+    // try {
+    //     return JSON.parse(fixed);
+    // } catch (e:any) {
+    //     console.error("Kann nicht parsen:", e.message, "\nInput war:\n", fixed);
+    //     return null;
+    // }
 }
 
 
@@ -68,7 +86,7 @@ function extractJSON(text: string) {
                 console.log("Lazy parsed JSON:", lazyParsed);
                 return lazyParsed;
             }
-            //console.error("Kann nicht parsen:", e, "\nInput war:\n", last);
+            console.error("Kann nicht parsen:", e, "\nInput war:\n", last);
             return null;
         }
     }

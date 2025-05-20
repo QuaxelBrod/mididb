@@ -372,8 +372,8 @@ ipcMain.handle('open-midi-file', async (): Promise<IMidiFileInformation | null> 
                 musicbrainz: null,
                 validationState: 'open'
             };
-            let midifile = (await readMidiFile(filePaths[0]));
-            if (midifile === null) {
+            ret.midifile = (await readMidiFile(filePaths[0]));
+            if (ret.midifile === null) {
                 return null; // hash already in db
             }
 
@@ -381,20 +381,19 @@ ipcMain.handle('open-midi-file', async (): Promise<IMidiFileInformation | null> 
             let db_document: IDBMidiDocument | null = ret.midifile ? await getDbEntryForHash(ret.midifile.hash) : null;
             // check if name is in db entry
             if (db_document && db_document.midifile.fileName) {
-                let f_name_to_search = midifile.fileName[0];
+                let f_name_to_search = ret.midifile.fileName[0];
                 let fileNames = db_document.midifile.fileName;
                 if (fileNames.includes(f_name_to_search)) {
                     // f_name_to_search ist bereits vorhanden
                     return db_document; // hash already in db
                 }
                 else {
-                    midifile.fileName = [...fileNames, f_name_to_search];
+                    ret.midifile.fileName = [...fileNames, f_name_to_search];
                 }
             }
 
-            ret.midifile = midifile;
-            ret.musicLLM = await parseWithOLLAMA(midifile);
-            ret.musicbrainz = await parseOnMusicbrainz(ret.musicLLM, midifile);
+            ret.musicLLM = await parseWithOLLAMA(ret.midifile);
+            ret.musicbrainz = await parseOnMusicbrainz(ret.musicLLM, ret.midifile);
 
             ret = validationStateMidiFile(ret);
 
