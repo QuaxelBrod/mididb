@@ -1,9 +1,22 @@
 export interface IDBMidiDocument {
+  redacted?: {
+    title?: string;
+    artist?: string;
+    release?: string;
+    album?: string;
+    text?: string;
+    tags?: Array<{
+      name: string;
+    }>;
+    note?: string;
+    tempo?: number;
+    signature?: string;
+  }
   validationState: string;
   midifile: {
-    filePath: string;
-    fileName: Array<string>;
-    fileDir: string;
+    filePath: string | null;
+    fileName: Array<string> | null;
+    fileDir: string | null;
     fileExt: string;
     data: any;
     hash: string;
@@ -28,7 +41,7 @@ export interface IDBMidiDocument {
     title: string;
     release: string;
     album: string;
-  };
+  } | null;
   musicbrainz: {
     top: Array<{
       title: string;
@@ -53,6 +66,6 @@ export interface IDBMidiDocument {
         name: string;
         count: number;
       }>;
-    };
-  };
+    } | null;
+  } | null;
 }

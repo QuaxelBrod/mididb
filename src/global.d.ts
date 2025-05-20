@@ -23,9 +23,9 @@ declare global {
 
 
   interface ILoadMidiFile {
-    filePath: string,
-    fileName: Array<string>,
-    fileDir: string,
+    filePath: string | null,
+    fileName: Array<string> | null,
+    fileDir: string | null,
     fileExt: string,
     data: ArrayBuffer | null,
     hash: string | null,
@@ -51,8 +51,22 @@ declare global {
   }
 
   interface IMusicbrainzResponse {
-    top: Array<IMusicbrainzResponseEntry>;
-    oldest: IMusicbrainzResponseEntry;
+    top: Array<IMusicbrainzResponseEntry> | null;
+    oldest: IMusicbrainzResponseEntry | null;
+  }
+
+  interface IMidiFileRedacted {
+    title?: string;
+    artist?: string;
+    release?: string;
+    album?: string;
+    text?: string;
+    tags?: Array<{
+      name: string;
+    }>;
+    note?: string;
+    tempo?: number;
+    signature?: string;
   }
 
   interface IMidiFileInformation {
@@ -60,12 +74,16 @@ declare global {
     midifile: ILoadMidiFile | null;
     musicLLM: IMusicLLM_softsearch_result | null;
     musicbrainz: IMusicbrainzResponse | null;
+    redacted?: IMidiFileRedacted | null;
   }
 
 
   interface Window {
     electron: {
+      searchMidiDocuments(arg0: { $text: { $search: string; }}, $skip: number, $limit: number) : SearchMidiDocumentsResult;
+      getMidiFileByHash(hash: string): Promise<IMidiFileInformation>;
       openMidiFile: () => Promise<IMidiFileInformation>;
+      saveMidiFile: (midifile: IMidiFileInformation) => Promise<IMidiFileInformation>;
       scanMidiDir: () => Promise<boolean>,
       loadSoundfont: (path: string) => Promise<ArrayBuffer>;
     };

@@ -5,7 +5,9 @@ const instrumentList = instruments.split('\n').map(line => line.trim().toLowerCa
 
 export function getLLMUserPrompt(midifile: ILoadMidiFile): string {
     let prompt = "Wich song you would choose with this information:\n";
-    prompt += `Song has this file names: ${midifile.fileName.join(", ")}\n`;
+    if (midifile.fileName != null) {
+        prompt += `Song has this file names: ${midifile.fileName.join(", ")}\n`;
+    }
     prompt += `Song is from that directory: ${midifile.fileDir}\n`;
     if (midifile.midiParser != null) {
         if (midifile.midiParser.copyrightNotice?.length > 0) {

@@ -77,7 +77,7 @@ function extractJSON(text: string) {
         const last = matches[matches.length - 1];
         try {
             return JSON.parse(last.replace(/\\'/g, "'"));
-        } catch (e:any) {
+        } catch (e: any) {
             console.log("Error parsing chat result:\n", text);
             console.error("Ungültiges JSON:", e.message);
             console.log("Versuche lazyParseJson");
@@ -112,7 +112,7 @@ class MusicLLM {
     constructor(host = "localhost", port = 11434) {
         this.host = host;
         this.port = port;
-         // Assign model before usage
+        // Assign model before usage
         this.model = MODEL;
         this.messages = [];
         try {
@@ -132,24 +132,26 @@ class MusicLLM {
      * @returns {Promise<IMusicLLM_softsearch_result>} - The result of the soft search.
      */
     async soft_search(message: string): Promise<IMusicLLM_softsearch_result | null> {
-        let chat_result: any = await ollama.chat({
-            model: this.model,
-            messages: [
-                {
-                    role: "system",
-                    content: system_prompt
-                },
-                {
-                    role: "user",
-                    content: message
-                }
-            ],
-            stream: false,
-            options: {
-                temperature: 0.1
-            }
-        });
+        let chat_result: any = null;
         try {
+            chat_result = await ollama.chat({
+                model: this.model,
+                messages: [
+                    {
+                        role: "system",
+                        content: system_prompt
+                    },
+                    {
+                        role: "user",
+                        content: message
+                    }
+                ],
+                stream: false,
+                options: {
+                    temperature: 0.1
+                }
+            });
+
             if (chat_result?.message?.content) {
                 let result: IMusicLLM_softsearch_result = extractJSON(chat_result?.message?.content);
                 return result;
