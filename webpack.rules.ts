@@ -28,4 +28,11 @@ export const rules: Required<ModuleOptions>['rules'] = [
       },
     },
   },
+  // {
+  //   test: /\.sf2$/,
+  //   type: 'asset/resource',
+  //   generator: {
+  //     filename: 'soundfont/[name][ext]'
+  //   }
+  // }
 ];

@@ -81,8 +81,21 @@ const MidiDB: React.FC = () => {
     };
 
     const loadSoundfont = async () => {
+        try {
         const arrayBuffer = await window.electron.loadSoundfont('alex_gm.sf2');
+        if (typeof arrayBuffer === 'string') {
+            // show popup and announce to install soundfont
+            alert('Soundfont konnte nicht geladen werden. Bitte installieren Sie die Soundfont-Datei.\n' + arrayBuffer);
+            console.error('Error loading soundfont:', arrayBuffer);
+            return;
+        }
         if (arrayBuffer) setSoundfont(arrayBuffer);
+        }
+        catch (error) {
+            // show popup and announce to install soundfont
+            alert('Soundfont konnte nicht geladen werden. Bitte installieren Sie die Soundfont-Datei.');
+            console.error('Error loading soundfont:', error);
+        }   
     };
 
     useEffect(() => { loadSoundfont(); }, []);
@@ -341,13 +354,13 @@ const MidiDB: React.FC = () => {
                                 <label>
                                     Tags:
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                        {(Array.isArray(redactedData?.tags) ? redactedData.tags : []).map((tag, idx) => (
+                                        {(Array.isArray(redactedData?.tags) ? redactedData!.tags : []).map((tag, idx) => (
                                             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                                 <input
                                                     type="text"
                                                     value={tag.name}
                                                     onChange={e => {
-                                                        const newTags = Array.isArray(redactedData?.tags) ? [...redactedData.tags] : [];
+                                                        const newTags = Array.isArray(redactedData?.tags) ? [...redactedData!.tags] : [];
                                                         newTags[idx] = { name: e.target.value };
                                                         handleredactedChange('tags', newTags);
                                                     }}
@@ -355,7 +368,7 @@ const MidiDB: React.FC = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => {
-                                                        const newTags = Array.isArray(redactedData?.tags) ? [...redactedData.tags] : [];
+                                                        const newTags = Array.isArray(redactedData?.tags) ? [...redactedData!.tags] : [];
                                                         newTags.splice(idx, 1);
                                                         handleredactedChange('tags', newTags);
                                                     }}
@@ -368,7 +381,7 @@ const MidiDB: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                const newTags = Array.isArray(redactedData?.tags) ? [...redactedData.tags] : [];
+                                                const newTags = Array.isArray(redactedData?.tags) ? [...redactedData!.tags] : [];
                                                 newTags.push({ name: '' });
                                                 handleredactedChange('tags', newTags);
                                             }}

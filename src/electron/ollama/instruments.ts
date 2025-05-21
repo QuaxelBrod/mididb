@@ -1,4 +1,4 @@
-Synbass
+let instruments = `Synbass
 Acoustic Grand Piano/Piano 1
 Piano 1w
 Piano 1d
@@ -851,4 +851,7 @@ Gun Shot
 Machine Gun
 Lasergun
 Explosion
-1b 128 127 Jungle Tune
+1b 128 127 Jungle Tune`;
+
+
+export default instruments;

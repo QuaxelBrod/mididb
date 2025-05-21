@@ -80,7 +80,7 @@ Für die Nutzung des LLM ist keine Internetverbindung nötig, solange Ollama und
 
 - Die Datei `alex_gm.sf2` wird als Soundfont für den MIDI-Player verwendet.
   Der SoundFont ist von: https://musical-artifacts.com/ Hier können noch andere Soundfonts gefunden werden.
-- Stelle sicher, dass diese Datei im Projektverzeichnis vorhanden ist oder passe den Dateinamen in `loadSoundfont()` an.
+- Stelle sicher, dass diese Datei im Projektverzeichnis unter `soundfont` vorhanden ist oder passe den Dateinamen in `loadSoundfont()` an.
 
 ---
 

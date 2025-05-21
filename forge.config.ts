@@ -10,17 +10,28 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 
 import { mainConfig } from './webpack.main.config';
 import { rendererConfig } from './webpack.renderer.config';
+import { copyRecursiveSync } from './copy-soundfont';
 
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    ignore: [
-      "db_old",
-      "soundfont",
-    ],
+    // extraResource: [
+    //   "soundfont",
+    // ],
+    // ignore: [
+    //   "db_old",
+    //   "soundfont",
+    // ],
   },
   rebuildConfig: {},
   makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],
+  hooks: {
+    postPackage: async (forgeConfig, options) => {
+      // console.log('postPackage', forgeConfig, options);
+      copyRecursiveSync('./soundfont', `${options.outputPaths[0]}/soundfont`);
+    },
+  },
+
   plugins: [
     new AutoUnpackNativesPlugin({}),
     new WebpackPlugin({
@@ -43,12 +54,12 @@ const config: ForgeConfig = {
     // at package time, before code signing the application
     new FusesPlugin({
       version: FuseVersion.V1,
-      [FuseV1Options.RunAsNode]: false,
+      [FuseV1Options.RunAsNode]: true,
       [FuseV1Options.EnableCookieEncryption]: true,
       [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
       [FuseV1Options.EnableNodeCliInspectArguments]: false,
       [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
-      [FuseV1Options.OnlyLoadAppFromAsar]: true,
+      [FuseV1Options.OnlyLoadAppFromAsar]: false,
     }),
   ],
 };

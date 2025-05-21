@@ -1,7 +1,9 @@
+import { app } from 'electron';
 import fs from 'fs';
+import path from 'path';
+import instrumentsData from './instruments';
 
-const instruments = fs.readFileSync("./src/electron/ollama/instruments.txt", "utf-8");
-const instrumentList = instruments.split('\n').map(line => line.trim().toLowerCase());
+const instrumentList = instrumentsData.split('\n').map(line => line.trim().toLowerCase());
 
 export function getLLMUserPrompt(midifile: ILoadMidiFile): string {
     let prompt = "Wich song you would choose with this information:\n";

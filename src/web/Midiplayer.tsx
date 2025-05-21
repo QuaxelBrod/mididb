@@ -4,6 +4,7 @@ import { Synthetizer, Sequencer } from 'spessasynth_lib';
 //import { Midi } from '@tonejs/midi';
 //import Soundfont from 'soundfont-player';
 
+
 interface MidiPlayerProps {
   midiData: { name: string, data: ArrayBuffer };
   soundfont: ArrayBuffer;
