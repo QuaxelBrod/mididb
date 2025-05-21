@@ -8,6 +8,7 @@ import { getTitleFromEntry, getArtistFromEntry } from '../utli';
 type ViewMode = 'file' | 'search';
 
 const MidiDB: React.FC = () => {
+    const [rawMidiInformationData, setRawMidiInformationData] = useState<IMidiFileInformation|null>(null);
     const [view, setView] = useState<ViewMode>('file');
     const [midiData, setMidiData] = useState<ILoadMidiFile | null>(null);
     const [musicLLM, setMusicLLM] = useState<IMusicLLM_softsearch_result | null>(null);
@@ -43,6 +44,7 @@ const MidiDB: React.FC = () => {
         setLoading(true);
         const data = await window.electron.openMidiFile();
         if (data) {
+            setRawMidiInformationData(data);
             setMidiData(data.midifile);
             setredactedData(data.redacted || null);
             setMusicLLM(data.musicLLM);
@@ -119,6 +121,7 @@ const MidiDB: React.FC = () => {
 
     // Handler für Auswahl aus Suchergebnis
     const handleSelectSearchResult = (result: any) => {
+        setRawMidiInformationData(result);
         setMidiData(result.midifile);
         setredactedData(result.redacted || null);
         setMusicLLM(result.musicLLM);
@@ -196,6 +199,34 @@ const MidiDB: React.FC = () => {
                                 if (midiData?.data) handlePlayMidi({ name: (redactedData?.title ? redactedData.title: (midiData.fileName? midiData.fileName.join(", "):"unbekannt")), data: midiData.data });
                             }}>
                                 In Player laden
+                            </button>
+                            <button
+                                disabled={!midiData?.data}
+                                onClick={() => {
+                                    if (rawMidiInformationData && midiData?.data) {
+                                        // Erstelle Dateinamen aus Artist und Title
+                                        const artist = redactedData?.artist || getArtistFromEntry(rawMidiInformationData) || "unknown";
+                                        const title = redactedData?.title || getTitleFromEntry(rawMidiInformationData) || "untitled";
+                                        const fileName = `${artist} - ${title}.mid`;
+
+                                        // Erstelle Blob und Download-Link
+                                        const blob = new Blob([midiData.data], { type: 'audio/midi' });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = fileName;
+                                        document.body.appendChild(a);
+                                        a.click();
+
+                                        // Cleanup
+                                        setTimeout(() => {
+                                            document.body.removeChild(a);
+                                            URL.revokeObjectURL(url);
+                                        }, 100);
+                                    }
+                                }}
+                            >
+                                MIDI herunterladen
                             </button>
                             <div>
                                 {midiData && (

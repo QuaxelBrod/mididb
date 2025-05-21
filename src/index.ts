@@ -482,7 +482,7 @@ ipcMain.handle('load-soundfont', async (_event, soundfontName: string) => {
         const exePath = app.getPath('exe');
         let resolvedPath = path.join(exePath, "soundfont", soundfontName);
         if (!fs.existsSync(resolvedPath)) {
-            resolvedPath = path.join(exePath, "..", "soundfont", soundfontName);
+            resolvedPath = path.join(exePath, "../../../../../../..", "soundfont", soundfontName);
             if (!fs.existsSync(resolvedPath)) {
                 resolvedPath = path.join(exePath, "../../../..", "soundfont", soundfontName);
                 if (!fs.existsSync(resolvedPath)) {
