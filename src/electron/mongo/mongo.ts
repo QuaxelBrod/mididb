@@ -73,7 +73,11 @@ export async function searchRedactedMidiDocuments(query: object, skip = 0, limit
             redacted: { $exists: true, $ne: null }
         };
     }
-    const cursor = collection.find(query).skip(skip).limit(limit);
+
+    // Case-insensitive machen
+    const caseInsensitiveQuery = makeQueryCaseInsensitive(query);
+
+    const cursor = collection.find(caseInsensitiveQuery).skip(skip).limit(limit);
     const rawDocs = await cursor.toArray();
     const total = await collection.countDocuments(query);
 
@@ -110,8 +114,42 @@ export async function searchRedactedMidiDocuments(query: object, skip = 0, limit
     return { docs, total };
 }
 
+
+/**
+ * Konvertiert String-Suchkriterien in case-insensitive RegExp-Objekte
+ */
+function makeQueryCaseInsensitive(query: any): any {
+    // Bei leerer Query direkt zurückgeben
+    if (!query || Object.keys(query).length === 0) return query;
+    
+    // Bei $text-Suche nichts ändern (MongoDB Text-Indizes sind bereits case-insensitiv)
+    if (query.$text) return query;
+    
+    // Tiefe Kopie des Query-Objekts erstellen
+    const result = JSON.parse(JSON.stringify(query));
+    
+    // Rekursiv durch das Query-Objekt gehen
+    Object.keys(result).forEach(key => {
+        const value = result[key];
+        
+        // Wenn der Wert ein String ist, in RegExp umwandeln
+        if (typeof value === 'string' && !key.startsWith('$')) {
+            result[key] = { $regex: value, $options: 'i' };
+        } 
+        // Wenn es ein Objekt ist, rekursiv verarbeiten (außer bei speziellen MongoDB-Operatoren)
+        else if (typeof value === 'object' && value !== null && !key.startsWith('$')) {
+            result[key] = makeQueryCaseInsensitive(value);
+        }
+    });
+    
+    return result;
+}
+
+
 export async function searchMidiDocuments(query: object, skip = 0, limit = 10000): Promise<SearchMidiDocumentsResult> {
-    const cursor = collection.find(query).skip(skip).limit(limit);
+    const caseInsensitiveQuery = makeQueryCaseInsensitive(query);
+    
+    const cursor = collection.find(caseInsensitiveQuery).skip(skip).limit(limit);
     const rawDocs = await cursor.toArray();
     const total = await collection.countDocuments(query);
 

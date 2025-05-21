@@ -505,12 +505,7 @@ ipcMain.handle('get-midi-document-by-hash', async (_event, hash: string) => {
     let db_document: IDBMidiDocument | null = await getDbEntryForHash(hash);
     if (db_document) {
         //console.log('get-midi-document-by-hash:', db_document);
-        let ret: IMidiFileInformation = {
-            midifile: db_document.midifile,
-            musicLLM: db_document.musicLLM,
-            musicbrainz: db_document.musicbrainz,
-            validationState: db_document.validationState
-        };
+        let ret: IMidiFileInformation = db_document as IMidiFileInformation;
         //console.log('get-midi-document-by-hash:', ret);
         return ret;
     }

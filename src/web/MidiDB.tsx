@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import MetadataView from './MetadataView';
 import MidiPlayer from './Midiplayer';
 import MidiSearch, { MidiSearchResult } from './MidiSearch';
 import { getTitleFromEntry, getArtistFromEntry } from '../utli';
@@ -170,7 +169,11 @@ const MidiDB: React.FC = () => {
                 <br />
                 <div style={{ display: 'fixed', alignItems: 'center', gap: '2rem', marginBottom: 24 }}>
                     {soundfont && playerMidiData && (
-                        <MidiPlayer midiData={playerMidiData} soundfont={soundfont} />
+                        <MidiPlayer
+                            midiData={playerMidiData}
+                            soundfont={soundfont}
+                            onSoundfontChange={(newSoundfont) => setSoundfont(newSoundfont)}
+                        />
                     )}
                 </div>
             </div>
