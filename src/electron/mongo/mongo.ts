@@ -6,15 +6,15 @@ import { SearchMidiDocumentsResult } from "../../web/MidiSearch";
 import { getTitleFromEntry , getArtistFromEntry} from "../../utli";
 
 
-const uri = "mongodb://localhost:27017";
-const dbName = "mididb";
-const collectionName = "midifiles";
+const uri_fix = "mongodb://localhost:27017";
+const dbName_fix = "mididb";
+const collectionName_fix = "midifiles";
 
 let client: MongoClient;
 let collection: Collection<Document>;
 
 // Initialisierung: Verbindung und Index auf hash
-export async function initMongo() {
+export async function initMongo(uri: string = uri_fix, dbName: string = dbName_fix, collectionName: string = collectionName_fix) {
     client = new MongoClient(uri);
     await client.connect();
     const db = client.db(dbName);

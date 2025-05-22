@@ -3,6 +3,13 @@ import MidiPlayer from './Midiplayer';
 import MidiSearch, { MidiSearchResult } from './MidiSearch';
 import { getTitleFromEntry, getArtistFromEntry } from '../utli';
 
+// Extend the Window interface to include __USE__NODE__
+declare global {
+    interface Window {
+        __USE__NODE__?: boolean;
+    }
+}
+
 
 type ViewMode = 'file' | 'search';
 
@@ -99,7 +106,12 @@ const MidiDB: React.FC = () => {
         }   
     };
 
-    useEffect(() => { loadSoundfont(); }, []);
+    useEffect(() => { 
+        if (window.__USE__NODE__ === true) {
+            alert("Die Anwendung läuft im Node.js-Modus.");
+        }
+        loadSoundfont(); 
+    }, []);
 
     const handlePlayMidi = (data: { name: string, data: ArrayBuffer } | null) => {
         setPlayerMidiData(data);
@@ -168,13 +180,13 @@ const MidiDB: React.FC = () => {
                 <hr />
                 <br />
                 <div style={{ display: 'fixed', alignItems: 'center', gap: '2rem', marginBottom: 24 }}>
-                    {soundfont && playerMidiData && (
+                    {/* {soundfont && playerMidiData && ( */}
                         <MidiPlayer
                             midiData={playerMidiData}
                             soundfont={soundfont}
                             onSoundfontChange={(newSoundfont) => setSoundfont(newSoundfont)}
                         />
-                    )}
+                    {/* )} */}
                 </div>
             </div>
 

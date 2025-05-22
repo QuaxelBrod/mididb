@@ -35,6 +35,22 @@ export class MidiFile {
         return hash;
     }
 
+
+    static parseMidiData(midiData: ArrayBuffer): MidiFile | null {
+        try {
+            if (midiData) {
+                let ret = new MidiFile();
+                ret.midiData = midiData;
+                ret.setDataHash();
+                ret.midiParser = new MidiParser(new Uint8Array(midiData)).toJson();
+                return ret;
+            }
+        } catch (err) {
+            console.error('Fehler beim Parsen der MIDI-Daten:', err);
+        }
+        return null;
+    }
+
     static openMidiFile(midi_path: string): MidiFile | null {
         try {
             if (midi_path) {

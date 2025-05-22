@@ -23,8 +23,8 @@ let audioContextLoaded = false;
 })();
 
 interface MidiPlayerProps {
-    midiData: { name: string, data: ArrayBuffer };
-    soundfont: ArrayBuffer;
+    midiData: { name: string, data: ArrayBuffer } | null; // MIDI-Daten als ArrayBuffer
+    soundfont: ArrayBuffer | null; // Soundfont als ArrayBuffer
     onSoundfontChange?: (newSoundfont: ArrayBuffer) => void; // Neuer Prop für Soundfont-Änderungen
 }
 
@@ -41,7 +41,11 @@ const MidiPlayer: React.FC<MidiPlayerProps> = ({ midiData, soundfont, onSoundfon
 
     // Soundfont und MIDI laden
     const loadSynth = async () => {
-
+        if (!midiData || !soundfont) {
+            // alert("MIDI data or soundfont not loaded yet. Please restart.");
+            return;
+        }
+        //const midi = new Midi(midiData.data); // load the midi data
         const soundFontBuffer = soundfont; // resolve the promise to get ArrayBuffer
         const synth = new Synthetizer(context.destination, soundFontBuffer); // create the synthetizer
         const seq = new Sequencer([{ binary: midiData.data }], synth);       // create the sequencer
@@ -60,7 +64,7 @@ const MidiPlayer: React.FC<MidiPlayerProps> = ({ midiData, soundfont, onSoundfon
 
     const play = async () => {
         if (!audioContextLoaded) {
-            alert("AudioContext not loaded yet. Please restart.");
+            alert("AudioContext not loaded yet. Please load midi file and soundfont");
             return;
         }
         if (!seqRef.current) {
@@ -172,7 +176,7 @@ const MidiPlayer: React.FC<MidiPlayerProps> = ({ midiData, soundfont, onSoundfon
     // Initialisiere Synth und Sequencer neu, wenn midiData oder soundfont sich ändern
     useEffect(() => {
         stop();
-        if (seqRef.current) {
+        if (seqRef.current && midiData && midiData.data) {
             seqRef.current.loadNewSongList([{ binary: midiData.data }], false);
         }
         setIsPlaying(false);
@@ -207,7 +211,7 @@ const MidiPlayer: React.FC<MidiPlayerProps> = ({ midiData, soundfont, onSoundfon
                             willChange: 'transform',
                         }}
                     >
-                        {midiData.name}
+                        {midiData?.name || 'No MIDI file loaded'}
                     </div>
                     <style>
                         {`
@@ -228,7 +232,7 @@ const MidiPlayer: React.FC<MidiPlayerProps> = ({ midiData, soundfont, onSoundfon
             </div>
             <div className="controls">
                 <button onClick={stop} disabled={!isPlaying}>Stop</button>
-                <button onClick={play} disabled={isPlaying}>Play</button>
+                <button onClick={play} disabled={isPlaying || !midiData?.data}>Play</button>
                 <button onClick={pause} disabled={!isPlaying}>Pause</button>
                 <br />
                 <p>Seconds : {displayTime}</p>
