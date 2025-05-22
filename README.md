@@ -117,6 +117,28 @@ Jede Menge... Derzeit reicht der Kram aber für mich
    npm run electron
    ```
 
+
+## Docker
+
+Einfach das Dockerfile starten. 
+
+```# Container-Image bauen
+docker build -t mididb-server .
+
+# Container starten und Port 3000 freigeben
+docker run -p 3000:3000 mididb-server
+```
+
+Environment Variablen für die Datenbank:
+
+- MONGO_URL: default: 'mongodb://localhost:27017'
+- MONGO_DB_NAME: default midi
+- MONGO_DB_COLLECTION: default midifiles
+- OLLAMA_API_URL: default localhost:11434
+
+Network = host, dann teilt sich der Container den host und kann das lokale OLLama sehen
+```docker run --rm --name mididb -p 3000:3000 --network=host -e MONGO_URL=mongodb://localhost:27017 mididb-server```
+
 ---
 
 ## Lizenz

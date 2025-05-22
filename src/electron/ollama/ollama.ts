@@ -1,5 +1,5 @@
 
-import ollama from 'ollama'
+import {Ollama} from 'ollama'
 
 
 const system_prompt = `You are a music expert.
@@ -98,11 +98,14 @@ let MODEL = "llama3.2:3b";
 //let MODEL = "gemma3:1b";
 
 class MusicLLM {
-
+    private ollama: any;
     private host: string;
     private port: number;
     private model: string;
     private messages: Array<{ role: string, content: string }>;
+
+    inititialized: boolean = false;
+    noOllama: boolean = false;
 
     /**
      * Constructor for the MusicLLM class.
@@ -110,20 +113,32 @@ class MusicLLM {
      * @param {number} port - The port number of the LLM server.
      */
     constructor(host = "localhost", port = 11434) {
+        if (process.env.OLLAMA_API_URL) {
+            const url = new URL(process.env.OLLAMA_API_URL);
+            host = url.hostname;
+            port = parseInt(url.port);
+        }
         this.host = host;
         this.port = port;
         // Assign model before usage
         this.model = MODEL;
         this.messages = [];
+
+    }
+
+    async init():Promise<boolean> {
         try {
-            (async () => {
-                await ollama.pull({ model: MODEL });
-                console.log("Model loaded");
-            })();
+            this.ollama = new Ollama({
+                host: this.host
+            });
+            await this.ollama.pull({ model: MODEL });
+            console.log("Model loaded");
+            this.inititialized = true;
         }
         catch (error) {
             console.error("Error loading model:", error);
         }
+        return this.inititialized;
     }
 
     /**
@@ -131,43 +146,49 @@ class MusicLLM {
      * @param {string} message - The message containing the song information.
      * @returns {Promise<IMusicLLM_softsearch_result>} - The result of the soft search.
      */
-    async soft_search(message: string): Promise<IMusicLLM_softsearch_result | null> {
-        let chat_result: any = null;
-        try {
-            chat_result = await ollama.chat({
-                model: this.model,
-                messages: [
-                    {
-                        role: "system",
-                        content: system_prompt
-                    },
-                    {
-                        role: "user",
-                        content: message
+    async soft_search(message: string): Promise < IMusicLLM_softsearch_result | null > {
+            let chat_result: any = null;
+            try {
+                if (!this.inititialized) {
+                    if (!await this.init()) {
+                        console.error("Ollama not initialized");
+                        return null;
                     }
-                ],
-                stream: false,
-                options: {
-                    temperature: 0.1
                 }
-            });
+                chat_result = await this.ollama.chat({
+                    model: this.model,
+                    messages: [
+                        {
+                            role: "system",
+                            content: system_prompt
+                        },
+                        {
+                            role: "user",
+                            content: message
+                        }
+                    ],
+                    stream: false,
+                    options: {
+                        temperature: 0.1
+                    }
+                });
 
-            if (chat_result?.message?.content) {
-                let result: IMusicLLM_softsearch_result = extractJSON(chat_result?.message?.content);
-                return result;
-            }
+                if(chat_result?.message?.content) {
+                    let result: IMusicLLM_softsearch_result = extractJSON(chat_result?.message?.content);
+                    return result;
+                }
             else {
-                console.error("No content in chat result");
+                    console.error("No content in chat result");
+                    return null;
+                }
+            }
+        catch(error) {
+                console.log("Error parsing chat result:\n", chat_result?.message?.content);
+                console.error("Error parsing JSON:", error);
                 return null;
             }
         }
-        catch (error) {
-            console.log("Error parsing chat result:\n", chat_result?.message?.content);
-            console.error("Error parsing JSON:", error);
-            return null;
-        }
     }
-}
 //
 let MusicLLMinstance = new MusicLLM();
 export default MusicLLMinstance;

@@ -46,8 +46,24 @@ app.use((err:any, req:any, res:any, next:any) => {
 
 
 (async () => {
+    let dbUrl = 'mongodb://localhost:27017'; // Standard-URL für MongoDB
+    if (process.env.MONGO_URL) {
+        dbUrl = process.env.MONGO_URL; // URL aus der Umgebungsvariable verwenden
+    }
+    console.log('MongoDB URL:', dbUrl);
+    let dbName = 'midi'; // Standard-Datenbankname
+    if (process.env.MONGO_DB_NAME) {
+        dbName = process.env.MONGO_DB_NAME; // Datenbankname aus der Umgebungsvariable verwenden
+    }
+    console.log('MongoDB Datenbankname:', dbName);
+    let dbCollection = 'midifiles'; // Standard-Collectionname
+    if (process.env.MONGO_DB_COLLECTION) {
+        dbCollection = process.env.MONGO_DB_COLLECTION; // Collectionname aus der Umgebungsvariable verwenden
+    }
+    console.log('MongoDB Collectionname:', dbCollection);
     // Initialize mongoDB
-    await initMongo();
+    await initMongo(dbUrl, dbName, dbCollection);
+    console.log('MongoDB initialisiert');
 })();
 
 const server = app.listen(port, () => {

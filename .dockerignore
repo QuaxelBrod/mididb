@@ -1,0 +1,11 @@
+# .dockerignore
+.vscode/
+.webpack/
+node_modules/
+out/
+dist/
+bckup/
+db_old/
+.git/
+.vscode/
+*.log
