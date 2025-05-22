@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+// Extend the Window interface to include __USE__NODE__
+declare global {
+    interface Window {
+        __USE__NODE__?: boolean;
+    }
+}
+
 export interface MidiSearchResult {
 
     title: string | string[];
@@ -68,7 +75,15 @@ const MidiSearch: React.FC<MidiSearchProps> = ({
         setLoading(true);
         const skip = (page - 1) * pageSize;
         const searchString = buildAndSearchString(query);
-        const res = await window.electron.searchMidiDocuments({ $text: { $search: searchString } }, skip, pageSize);
+        let res: SearchMidiDocumentsResult = { docs: [], total: 0 };
+        if (window.__USE__NODE__) {
+            // node load
+            res = await searchMidiDocumentsNode({ $text: { $search: searchString } }, skip, pageSize);
+        }
+        else {
+            // electron load
+            res = await window.electron.searchMidiDocuments({ $text: { $search: searchString } }, skip, pageSize);
+        }
         setResults(res.docs || []);
         setTotal(res.total || 0);
         setLoading(false);
@@ -80,12 +95,25 @@ const MidiSearch: React.FC<MidiSearchProps> = ({
             const skip = 0; //(page - 1) * pageSize;
             const searchString = buildAndSearchString(query);
 
-            window.electron.searchMidiDocuments({ $text: { $search: searchString } }, skip, pageSize)
-                .then((res: SearchMidiDocumentsResult) => {
-                    setResults(res.docs || []);
-                    setTotal(res.total || 0);
-                })
-                .finally(() => setLoading(false));
+            if (window.__USE__NODE__) {
+            // node load
+                searchMidiDocumentsNode({ $text: { $search: searchString } }, skip, pageSize)
+                    .then((res: SearchMidiDocumentsResult) => {
+                        setResults(res.docs || []);
+                        setTotal(res.total || 0);
+                    })
+                    .finally(() => setLoading(false));
+            }
+            else {
+                // electron load
+                window.electron.searchMidiDocuments({ $text: { $search: searchString } }, skip, pageSize)
+                    .then((res: SearchMidiDocumentsResult) => {
+                        setResults(res.docs || []);
+                        setTotal(res.total || 0);
+                    })
+                    .finally(() => setLoading(false));
+            }
+
         }
         // eslint-disable-next-line
     }, [page, query]);
@@ -171,3 +199,30 @@ const MidiSearch: React.FC<MidiSearchProps> = ({
 };
 
 export default MidiSearch;
+
+async function searchMidiDocumentsNode(arg0: { $text: { $search: string; }; }, skip: number, pageSize: number): Promise<SearchMidiDocumentsResult> {
+    try {
+        const response = await fetch('/midi/searchMidiDocuments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                query: arg0,
+                skip: skip,
+                limit: pageSize
+            })
+        });
+        
+        if (!response.ok) {
+            console.error('Fehler bei der Suche:', response.statusText);
+            return { docs: [], total: 0 };
+        }
+        
+        const data = await response.json();
+        return data as SearchMidiDocumentsResult;
+    } catch (err) {
+        console.error('Fehler bei der Suche:', err);
+        return { docs: [], total: 0 };
+    }
+}

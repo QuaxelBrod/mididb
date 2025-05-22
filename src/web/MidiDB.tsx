@@ -53,6 +53,7 @@ const MidiDB: React.FC = () => {
             input.onchange = async (e: any) => {
                 const file = e.target.files[0];
                 if (!file) resolve(null);
+                setLoading(true);
                 const arrayBuffer = await file.arrayBuffer();
 
                 // Sende die Datei an den Node-Server
@@ -70,21 +71,71 @@ const MidiDB: React.FC = () => {
                         alert('Fehler beim Senden der Datei: ' + response.statusText);
                         resolve(null);
                     }
-                    const data = await response.json();
-                    // Hier kannst du das Ergebnis weiterverarbeiten:
+                    const data = await response.json() as unknown as IMidiFileInformation;
+                    if (data && data.midifile && data.midifile.data && typeof data.midifile.data === 'string') {
+                        // Convert the Base64 string back to an ArrayBuffer
+                        const binaryString = atob(data.midifile.data);
+                        const bytes = new Uint8Array(binaryString.length);
+
+                        for (let i = 0; i < binaryString.length; i++) {
+                            bytes[i] = binaryString.charCodeAt(i);
+                        }
+
+                        data.midifile.data = bytes.buffer;
+                    }                // Hier kannst du das Ergebnis weiterverarbeiten:
                     resolve(data as IMidiFileInformation);
                 } catch (err) {
                     alert('Fehler beim Senden der Datei');
                     resolve(null);
                 }
             };
+
             input.click();
         }
         );
     };
 
+    const saveMidiFileToNode = async (midiData: IMidiFileInformation) => {
+        return new Promise<boolean>(async (resolve) => {
+            // Sende die Datei an den Node-Server
+            // setLoading(true);
+            try {
+                if (midiData && midiData.midifile && midiData.midifile.data) {
+                    // ArrayBuffer in einen binären String konvertieren
+                    const uint8Array = new Uint8Array(midiData.midifile.data as ArrayBuffer);
+                    let binaryString = '';
+                    for (let i = 0; i < uint8Array.length; i++) {
+                        binaryString += String.fromCharCode(uint8Array[i]);
+                    }
+
+                    // Binären String zu Base64 konvertieren
+                    midiData.midifile.data = btoa(binaryString);
+                }                // Convert the ArrayBuffer to a Base64 string
+
+                const response = await fetch('/midi/saveMidiFile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(midiData)
+                });
+                if (!response.ok) {
+                    alert('Fehler beim Senden der Datei: ' + response.statusText);
+                    resolve(false);
+                }
+                const data = await response.json();
+
+                // Hier kannst du das Ergebnis weiterverarbeiten:
+                resolve(data.success);
+            } catch (err) {
+                alert('Fehler beim Senden der Datei');
+                resolve(false);
+            }
+        }
+        );
+    };
+
     const loadMidiFile = async () => {
-        setLoading(true);
         let data: IMidiFileInformation | null = null;
         if (window.__USE__NODE__ === true) {
             // Node.js-Modus
@@ -94,6 +145,7 @@ const MidiDB: React.FC = () => {
             data = await openAndSendMidiFile();
         }
         else {
+            setLoading(true);
             data = await window.electron.openMidiFile();
         }
         if (data) {
@@ -110,26 +162,44 @@ const MidiDB: React.FC = () => {
 
     const saveMidiFile = async () => {
         setLoading(true);
-        // Annahme: editData enthält die bearbeiteten Felder
-        let data = await window.electron.saveMidiFile({
-            midifile: midiData,
-            musicLLM: musicLLM,
-            musicbrainz: musicbrainz,
-            validationState: 'reviewed',
-            redacted: redactedData
-        });
-        if (data) {
-            setMidiData(data.midifile);
-            setredactedData(data.redacted || null);
-            setMusicLLM(data.musicLLM);
-            setMusicbrainz(data.musicbrainz);
-            setSearchResult(null);
+        let data: boolean = false;
+        if (window.__USE__NODE__ === true) {
+            // Node.js-Modus
+            // show file open dialog from webpage
+
+            // send midi to node and get IMidiFileInformation
+            data = await saveMidiFileToNode({
+                midifile: midiData,
+                musicLLM: musicLLM,
+                musicbrainz: musicbrainz,
+                validationState: 'reviewed',
+                redacted: redactedData
+            });
+        }
+        else {
+            // Annahme: editData enthält die bearbeiteten Felder
+            data = await window.electron.saveMidiFile({
+                midifile: midiData,
+                musicLLM: musicLLM,
+                musicbrainz: musicbrainz,
+                validationState: 'reviewed',
+                redacted: redactedData
+            });
         }
         setLoading(false);
-        alert('Gespeichert!');
+        if (!data) {
+            alert('Fehler beim Speichern der Datei');
+        }
+        else {
+            alert('Gespeichert!');
+        }
     };
 
     const scanMidiDir = async () => {
+        if (window.__USE__NODE__ !== true) {
+            alert("Die Anwendung läuft nicht im Node.js-Modus.");
+            return;
+        }
         setLoading(true);
         await window.electron.scanMidiDir();
         setLoading(false);
@@ -153,11 +223,33 @@ const MidiDB: React.FC = () => {
         }
     };
 
+    const loadSoundfontFromServer = async () => {
+        try {
+            console.log('Lade Soundfont vom Server...');
+            const response = await fetch('alex_gm.sf2');
+
+            if (!response.ok) {
+                throw new Error(`Fehler beim Laden der Soundfont: ${response.status} ${response.statusText}`);
+            }
+
+            const arrayBuffer = await response.arrayBuffer();
+            console.log('Soundfont erfolgreich geladen');
+            setSoundfont(arrayBuffer);
+        } catch (error) {
+            console.error('Fehler beim Laden der Soundfont vom Server:', error);
+            alert('Soundfont konnte nicht vom Server geladen werden. Bitte prüfen Sie, ob die Datei im static-Ordner verfügbar ist.');
+        }
+    };
+
     useEffect(() => {
         if (window.__USE__NODE__ === true) {
-            alert("Die Anwendung läuft im Node.js-Modus.");
+            // show popup and announce to install soundfont
+            loadSoundfontFromServer();
+            // alert('Die Anwendung läuft im Node.js-Modus. Bitte laden Sie eine lokale Soundfont-Datei.');
         }
-        loadSoundfont();
+        else {
+            loadSoundfont();
+        }
     }, []);
 
     const handlePlayMidi = (data: { name: string, data: ArrayBuffer } | null) => {
@@ -187,6 +279,45 @@ const MidiDB: React.FC = () => {
         setSearchResult(result);
         setView('file');
     };
+
+    function loadMidiFileByHashFromNode(hash: string): IMidiFileInformation | PromiseLike<IMidiFileInformation | null> | null {
+        return new Promise<IMidiFileInformation | null>(async (resolve) => {
+            // Sende die Datei an den Node-Server
+            // setLoading(true);
+            try {
+                const response = await fetch('/midi/getMidiFileByHash', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ hash: hash })
+                });
+                if (!response.ok) {
+                    alert('Fehler beim laden der Datei: ' + response.statusText);
+                    resolve(null);
+                }
+                const data = await response.json() as unknown as IMidiFileInformation;
+                // decode Base64 string to ArrayBuffer
+                if (data && data.midifile && data.midifile.data && typeof data.midifile.data === 'string') {
+                    // Convert the Base64 string back to an ArrayBuffer
+                    const binaryString = atob(data.midifile.data);
+                    const bytes = new Uint8Array(binaryString.length);
+
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+
+                    data.midifile.data = bytes.buffer;
+                }
+                // Hier kannst du das Ergebnis weiterverarbeiten:
+                resolve(data);
+            } catch (err) {
+                alert('Fehler beim laden der Datei');
+                resolve(null);
+            }
+        }
+        );
+    }
 
     return (
         <div
@@ -222,7 +353,7 @@ const MidiDB: React.FC = () => {
                     Datenbank Suche
                 </button>
                 {window.__USE__NODE__ !== true && (
-                <button onClick={scanMidiDir}>Scan dir</button>
+                    <button onClick={scanMidiDir}>Scan dir</button>
                 )}
                 <br />
                 <br />
@@ -252,7 +383,8 @@ const MidiDB: React.FC = () => {
 
                 }}
             >
-                {view === 'file' && (
+                {/* File View - immer rendern, nur Sichtbarkeit ändern */}
+                <div style={{ display: view === 'file' ? 'block' : 'none' }}>
                     <div style={{ display: 'flex', flexDirection: 'row', gap: 16 }}>
                         <div style={{ flex: 2, padding: 16, background: '#f5f5f5', borderRadius: 8 }}>
                             <div>
@@ -260,7 +392,7 @@ const MidiDB: React.FC = () => {
                             </div>
                             <br />
                             <button disabled={midiData ? false : true} onClick={() => {
-                                if (midiData?.data) handlePlayMidi({ name: (redactedData?.title ? redactedData.title : (midiData.fileName ? midiData.fileName.join(", ") : "unbekannt")), data: midiData.data });
+                                if (midiData?.data) handlePlayMidi({ name: (redactedData?.title ? redactedData.title : (midiData.fileName ? midiData.fileName.join(", ") : "unbekannt")), data: midiData.data as ArrayBuffer });
                             }}>
                                 In Player laden
                             </button>
@@ -522,26 +654,44 @@ const MidiDB: React.FC = () => {
                             </form>
                         </div>
                     </div>
-                )}
+                </div>
 
-                {view === 'search' && (
+
+                {/* Search View - immer rendern, nur Sichtbarkeit ändern */}
+                <div style={{ display: view === 'search' ? 'block' : 'none' }}>
 
                     <MidiSearch
                         onPlay={async (hash: string) => {
                             // Hole das Dokument aus der DB und zeige es wie beim Datei-Laden
                             setLoading(true);
-                            const result = await window.electron.getMidiFileByHash(hash);
+                            let result: IMidiFileInformation | null = null;
+                            if (window.__USE__NODE__ === true) {
+                                // Node.js-Modus
+                                result = await loadMidiFileByHashFromNode(hash);
+                            }
+                            else {
+                                // hole das Dokument aus der DB
+                                result = await window.electron.getMidiFileByHash(hash);
+                            }
                             if (result && result.midifile && result.midifile.data) {
                                 // handleSelectSearchResult(result);
                                 setSearchResult(result);
-                                handlePlayMidi({ name: getTitleFromEntry(result) + " -- " + getArtistFromEntry(result), data: result.midifile.data });
+                                handlePlayMidi({ name: getTitleFromEntry(result) + " -- " + getArtistFromEntry(result), data: result.midifile.data as ArrayBuffer });
                             }
                             setLoading(false);
                         }}
                         onSelect={async (hash: string) => {
                             // Hole das Dokument aus der DB und zeige es wie beim Datei-Laden
                             setLoading(true);
-                            const result = await window.electron.getMidiFileByHash(hash);
+                            let result: IMidiFileInformation | null = null;
+                            if (window.__USE__NODE__ === true) {
+                                // Node.js-Modus
+                                result = await loadMidiFileByHashFromNode(hash);
+                            }
+                            else {
+                                // hole das Dokument aus der DB
+                                result = await window.electron.getMidiFileByHash(hash);
+                            }
                             if (result) {
                                 handleSelectSearchResult(result);
                             }
@@ -557,7 +707,7 @@ const MidiDB: React.FC = () => {
                         page={searchPage}
                         setPage={setSearchPage}
                     />
-                )}
+                </div>
 
                 {loading && (
                     <div className="wait-screen" style={{
@@ -576,7 +726,6 @@ const MidiDB: React.FC = () => {
                     </div>
                 )}
             </div>
-
         </div>
     );
 };

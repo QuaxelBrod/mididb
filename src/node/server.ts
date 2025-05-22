@@ -24,9 +24,12 @@ app.get('/test', (req, res) => {
 });
 
 // Statische Dateien (React-Build) ausliefern
-app.use(express.static(path.join(__dirname, './static')));
+app.use(express.static(path.join(__dirname, '../static')));
 
 // Füge dies hinzu:
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, '../static/index.html'));
+});
 // app.get('*', (req, res) => {
 //     res.sendFile(path.join(__dirname, './static/index.html'));
 // });

@@ -27,7 +27,7 @@ declare global {
     fileName: Array<string> | null,
     fileDir: string | null,
     fileExt: string,
-    data: ArrayBuffer | null,
+    data: ArrayBuffer | string | null,
     hash: string | null,
     midiParser: IMidiParser | null;
   };
@@ -83,7 +83,7 @@ declare global {
       searchMidiDocuments(arg0: { $text: { $search: string; }}, $skip: number, $limit: number) : SearchMidiDocumentsResult;
       getMidiFileByHash(hash: string): Promise<IMidiFileInformation>;
       openMidiFile: () => Promise<IMidiFileInformation>;
-      saveMidiFile: (midifile: IMidiFileInformation) => Promise<IMidiFileInformation>;
+      saveMidiFile: (midifile: IMidiFileInformation) => Promise<boolean>;
       scanMidiDir: () => Promise<boolean>,
       loadSoundfont: (path: string) => Promise<ArrayBuffer>;
     };

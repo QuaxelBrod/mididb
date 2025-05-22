@@ -315,8 +315,15 @@ ipcMain.handle("get-midi-file-by-hash", async (_event, hash: string): Promise<IM
 });
 
 
-ipcMain.handle('save-midi-file', async (_event, midi: IMidiFileInformation): Promise<void> => {
-    await save_midi_file(midi);
+ipcMain.handle('save-midi-file', async (_event, midi: IMidiFileInformation): Promise<boolean> => {
+    try {
+        await save_midi_file(midi);
+        return true;
+    }
+    catch (err) {
+        console.error('Fehler beim Speichern der MIDI-Datei:', err);
+        return false;
+    }
 });
 
 
