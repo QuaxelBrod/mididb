@@ -10,7 +10,8 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "eslint --ext .ts,.tsx ."
+    "lint": "eslint --ext .ts,.tsx .",
+    "build:web": "webpack --config webpack.react.config.ts --env ts-node/register"
   },
   "keywords": [],
   "author": "A300851",
@@ -37,20 +38,24 @@
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.31.0",
     "fork-ts-checker-webpack-plugin": "^7.3.0",
+    "html-webpack-plugin": "^5.6.3",
     "node-loader": "^2.1.0",
     "style-loader": "^3.3.4",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
-    "typescript": "~4.5.4"
+    "typescript": "~4.5.4",
+    "webpack": "^5.99.9"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
+    "express": "^5.1.0",
     "mongodb": "^6.16.0",
     "musicbrainz-api": "^0.25.0",
     "ollama": "^0.5.15",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "spessasynth_lib": "^3.26.12",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "webpack-cli": "^6.0.1"
   }
 }

@@ -213,6 +213,10 @@ export async function getDbEntryForHash(hash: string | null): Promise<IDBMidiDoc
     }
     const result = await collection.findOne({ "midifile.hash": hash }) as unknown as IDBMidiDocument;
     // base64String ist dein gespeicherter String
+    if (!result) {
+        return null;
+    }
+    // Konvertiere den base64-String zurück in ein ArrayBuffer
     const buffer = Buffer.from(result.midifile.data, 'base64');
     // Wenn du ein ArrayBuffer brauchst:
     result.midifile.data = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
