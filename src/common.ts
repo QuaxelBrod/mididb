@@ -113,7 +113,7 @@ export async function read_midi_file(filePath: string): Promise<IMidiFileInforma
     return null;
 }
 
-export async function parse_midi_file(midiData: ArrayBuffer | null, fileName: string, filePaths: string): Promise<IMidiFileInformation | null> {
+export async function parse_midi_file(midiData: ArrayBuffer | null, fileName: string = "<unknown>", filePaths: string = ""): Promise<IMidiFileInformation | null> {
     try {
         if (midiData) {
             let ret: IMidiFileInformation = {
@@ -126,6 +126,8 @@ export async function parse_midi_file(midiData: ArrayBuffer | null, fileName: st
             if (ret.midifile === null) {
                 return null; // hash already in db
             }
+            ret.midifile.fileName = [fileName];
+            ret.midifile.filePath = filePaths;
 
             return ret;
         }

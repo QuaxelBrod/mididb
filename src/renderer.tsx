@@ -47,3 +47,4 @@ window.addEventListener('contextmenu', e => {
   e.preventDefault();
   document.execCommand('copy');
 });
+

@@ -50,7 +50,7 @@ export class MidiParser {
     toJson() {
         return {
             header: this.header,
-            tracks: [],
+            tracks: <any>[],
             copyrightNotice: this.copyrightNotice,
             trackName: this.trackName,
             instrumentName: this.instrumentName,

@@ -14,7 +14,7 @@ declare global {
 type ViewMode = 'file' | 'search';
 
 const MidiDB: React.FC = () => {
-    const [rawMidiInformationData, setRawMidiInformationData] = useState<IMidiFileInformation|null>(null);
+    const [rawMidiInformationData, setRawMidiInformationData] = useState<IMidiFileInformation | null>(null);
     const [view, setView] = useState<ViewMode>('file');
     const [midiData, setMidiData] = useState<ILoadMidiFile | null>(null);
     const [musicLLM, setMusicLLM] = useState<IMusicLLM_softsearch_result | null>(null);
@@ -35,7 +35,7 @@ const MidiDB: React.FC = () => {
     // State für die aktuell abzuspielenden MIDI-Daten
     const [playerMidiData, setPlayerMidiData] = useState<{ name: string, data: ArrayBuffer } | null>(null);
 
-       // Ref für den rechten Bereich
+    // Ref für den rechten Bereich
     const mainContentRef = useRef<HTMLDivElement>(null);
 
     // Beim Wechsel des Views nach "file" oder "search" nach oben scrollen
@@ -45,10 +45,57 @@ const MidiDB: React.FC = () => {
         }
     }, [view]);
 
+    const openAndSendMidiFile = async (): Promise<IMidiFileInformation | null> => {
+        return new Promise<IMidiFileInformation | null>((resolve) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.midi,.mid,.kar';
+            input.onchange = async (e: any) => {
+                const file = e.target.files[0];
+                if (!file) resolve(null);
+                const arrayBuffer = await file.arrayBuffer();
+
+                // Sende die Datei an den Node-Server
+                // setLoading(true);
+                try {
+                    const response = await fetch('/midi/openMidiFile', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/octet-stream',
+                            'X-Filename': encodeURIComponent(file.name)
+                        },
+                        body: arrayBuffer
+                    });
+                    if (!response.ok) {
+                        alert('Fehler beim Senden der Datei: ' + response.statusText);
+                        resolve(null);
+                    }
+                    const data = await response.json();
+                    // Hier kannst du das Ergebnis weiterverarbeiten:
+                    resolve(data as IMidiFileInformation);
+                } catch (err) {
+                    alert('Fehler beim Senden der Datei');
+                    resolve(null);
+                }
+            };
+            input.click();
+        }
+        );
+    };
 
     const loadMidiFile = async () => {
         setLoading(true);
-        const data = await window.electron.openMidiFile();
+        let data: IMidiFileInformation | null = null;
+        if (window.__USE__NODE__ === true) {
+            // Node.js-Modus
+            // show file open dialog from webpage
+
+            // send midi to node and get IMidiFileInformation
+            data = await openAndSendMidiFile();
+        }
+        else {
+            data = await window.electron.openMidiFile();
+        }
         if (data) {
             setRawMidiInformationData(data);
             setMidiData(data.midifile);
@@ -90,27 +137,27 @@ const MidiDB: React.FC = () => {
 
     const loadSoundfont = async () => {
         try {
-        const arrayBuffer = await window.electron.loadSoundfont('alex_gm.sf2');
-        if (typeof arrayBuffer === 'string') {
-            // show popup and announce to install soundfont
-            alert('Soundfont konnte nicht geladen werden. Bitte installieren Sie die Soundfont-Datei.\n' + arrayBuffer);
-            console.error('Error loading soundfont:', arrayBuffer);
-            return;
-        }
-        if (arrayBuffer) setSoundfont(arrayBuffer);
+            const arrayBuffer = await window.electron.loadSoundfont('alex_gm.sf2');
+            if (typeof arrayBuffer === 'string') {
+                // show popup and announce to install soundfont
+                alert('Soundfont konnte nicht geladen werden. Bitte installieren Sie die Soundfont-Datei.\n' + arrayBuffer);
+                console.error('Error loading soundfont:', arrayBuffer);
+                return;
+            }
+            if (arrayBuffer) setSoundfont(arrayBuffer);
         }
         catch (error) {
             // show popup and announce to install soundfont
             alert('Soundfont konnte nicht geladen werden. Bitte installieren Sie die Soundfont-Datei.');
             console.error('Error loading soundfont:', error);
-        }   
+        }
     };
 
-    useEffect(() => { 
+    useEffect(() => {
         if (window.__USE__NODE__ === true) {
             alert("Die Anwendung läuft im Node.js-Modus.");
         }
-        loadSoundfont(); 
+        loadSoundfont();
     }, []);
 
     const handlePlayMidi = (data: { name: string, data: ArrayBuffer } | null) => {
@@ -174,18 +221,20 @@ const MidiDB: React.FC = () => {
                 <button onClick={() => setView('search')} style={{ fontWeight: view === 'search' ? 'bold' : undefined }}>
                     Datenbank Suche
                 </button>
+                {window.__USE__NODE__ !== true && (
                 <button onClick={scanMidiDir}>Scan dir</button>
+                )}
                 <br />
                 <br />
                 <hr />
                 <br />
                 <div style={{ display: 'fixed', alignItems: 'center', gap: '2rem', marginBottom: 24 }}>
                     {/* {soundfont && playerMidiData && ( */}
-                        <MidiPlayer
-                            midiData={playerMidiData}
-                            soundfont={soundfont}
-                            onSoundfontChange={(newSoundfont) => setSoundfont(newSoundfont)}
-                        />
+                    <MidiPlayer
+                        midiData={playerMidiData}
+                        soundfont={soundfont}
+                        onSoundfontChange={(newSoundfont) => setSoundfont(newSoundfont)}
+                    />
                     {/* )} */}
                 </div>
             </div>
@@ -200,7 +249,7 @@ const MidiDB: React.FC = () => {
                     overflow: 'auto',
                     minHeight: '100vh',
                     boxSizing: 'border-box',
-                    
+
                 }}
             >
                 {view === 'file' && (
@@ -209,9 +258,9 @@ const MidiDB: React.FC = () => {
                             <div>
                                 <button onClick={loadMidiFile}>Open MIDI File from Disk</button>
                             </div>
-                            <br/>
+                            <br />
                             <button disabled={midiData ? false : true} onClick={() => {
-                                if (midiData?.data) handlePlayMidi({ name: (redactedData?.title ? redactedData.title: (midiData.fileName? midiData.fileName.join(", "):"unbekannt")), data: midiData.data });
+                                if (midiData?.data) handlePlayMidi({ name: (redactedData?.title ? redactedData.title : (midiData.fileName ? midiData.fileName.join(", ") : "unbekannt")), data: midiData.data });
                             }}>
                                 In Player laden
                             </button>

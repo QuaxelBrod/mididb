@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ESNext",
     "allowJs": true,
     "module": "commonjs",
     "outDir": "../../dist",
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "jsx": "react-jsx",
     "types": ["node"],
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -17,5 +17,20 @@
       "*": ["node_modules/*"]
     }
   },
-  "include": ["./**/*"]
+  "include": [
+    "**/*",
+    "../*",
+    "../electron/**/*",
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "../web/**/*",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.e2e-spec.ts",
+    "../**/*.tsx",
+    "../index*",
+    "../preload.ts"
+  ]
 }

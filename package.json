@@ -12,8 +12,8 @@
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
     "build:web": "webpack --config webpack.react.config.ts --env ts-node/register",
-    "build:server": "npm run build:web && tsc -p src/node/ ",
-    "start:server": "npm run build:server && node dist/server.js"
+    "build:server": "npm run build:web && tsc -p src/node/ --outDir dist",
+    "start:server": "npm run build:server && node dist/node/server.js"
   },
   "keywords": [],
   "author": "A300851",
