@@ -4,20 +4,52 @@ import path from 'path';
 import apiRouter from './routes/api.js';
 import { initMongo } from '../electron/mongo/mongo';
 
+// Extend Express Request interface to include basePath
+declare global {
+    namespace Express {
+        interface Request {
+            basePath?: string;
+        }
+    }
+}
+
 
 const app = express();
 const port = 3000;
 
+
 // Ganz oben in server.ts nach den Imports
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    // Hole den Basis-Pfad aus dem Header (z. B. "/app")
+    const basePath = req.headers['x-forwarded-prefix'] as string || '';
+    // Füge den Basis-Pfad zur Request-Instanz hinzu
+    req.basePath = basePath;
+    // Optional: Passe die URL für interne Weiterleitungen an
+    req.originalUrl = basePath + req.originalUrl;
+    const originalSend = res.send;
+    res.send = function (body) {
+        if (typeof body === 'string' && req.basePath) {
+            body = body.replace(/(href|src)=["'](\/)/g, `$1="$2${req.basePath}/`);
+        }
+        return originalSend.call(this, body);
+    };
+    next();
 });
 
 app.use(express.json()); // <-- JSON-Parser
 app.use(express.urlencoded({ extended: true })); // <-- URL-Parameter-Parser
 
+app.get('/healthcheck', (_req, res) => {
+    res.json({ status: 'ok' });
+});
+
 app.use('/midi', apiRouter);
+
+// Middleware für HTML-Rewrite
+app.use((req, res, next) => {
+
+});
 
 app.get('/test', (req, res) => {
     res.send('Test erfolgreich!');
@@ -39,7 +71,7 @@ app.get(/.*/, (req, res) => {
 // });
 
 // Globaler Error-Handler
-app.use((err:any, req:any, res:any, next:any) => {
+app.use((err: any, req: any, res: any, next: any) => {
     console.error('Express Error:', err);
     res.status(500).json({ error: 'Server-Fehler' });
 });

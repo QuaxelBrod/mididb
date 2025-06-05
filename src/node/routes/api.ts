@@ -5,10 +5,7 @@ import { IDBMidiDocument } from '../../electron/mongo/global';
 
 const router = express.Router();
 
-// GET /api/healthcheck
-router.get('/healthcheck', (_req, res) => {
-    res.json({ status: 'ok' });
-});
+
 
 
 // POST /midi/openMidiFile
