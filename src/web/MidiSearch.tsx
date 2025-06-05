@@ -49,6 +49,7 @@ const MidiSearch: React.FC<MidiSearchProps> = ({
     setPage,
 }) => {
 
+    const [inputValue, setInputValue] = useState(query); // Lokaler State für das Input-Feld
     const [loading, setLoading] = useState(false);
     const pageSize = 10000;
 
@@ -125,7 +126,13 @@ const MidiSearch: React.FC<MidiSearchProps> = ({
         }
     }, [results, selectedHash]);
 
+useEffect(() => {
+    const timer = setTimeout(() => {
+        setQuery(inputValue); // setQuery wird erst nach 2 Sekunden ohne Änderungen aufgerufen
+    }, 2000);
 
+    return () => clearTimeout(timer); // Timer zurücksetzen, wenn sich inputValue ändert
+}, [inputValue, setQuery]);
 
     const handlePageChange = (newPage: number) => {
         setPage(newPage);
@@ -136,12 +143,12 @@ const MidiSearch: React.FC<MidiSearchProps> = ({
             <form onSubmit={handleSearch} style={{ marginBottom: 16 }}>
                 <input
                     type="text"
-                    value={query}
-                    onChange={e => setQuery(e.target.value)}
+                    value={inputValue}
+                    onChange={e => setInputValue(e.target.value)}
                     placeholder="Suche nach Artist, Titel, etc."
                     style={{ width: 300, marginRight: 8 }}
                 />
-                <button type="submit" disabled={loading}>Suchen</button>
+                {/* <button type="submit" disabled={loading}>Suchen</button> */}
             </form>
             {loading && <div>Suche läuft...</div>}
             {!loading && results.length === 0 && <div>Keine Ergebnisse.</div>}

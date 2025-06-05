@@ -70,7 +70,7 @@ enableElectronFileLog(true);
 // })();
 (async () => {
     // Initialize mongoDB
-    await initMongo();
+    await initMongo("192.168.178.29:27017", "mididb", "midifiles");
 })();
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
