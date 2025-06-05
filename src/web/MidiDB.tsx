@@ -22,6 +22,7 @@ const MidiDB: React.FC = () => {
     const [soundfont, setSoundfont] = useState<ArrayBuffer | null>(null);
     const [loading, setLoading] = useState(false);
     const [redactedData, setredactedData] = useState<IMidiFileRedacted | null>(null);
+    const [highlightState, setHighlightState] = useState<'success' | 'error' | null>(null);
 
     // Für Suchergebnis-Auswahl
     const [searchResult, setSearchResult] = useState<any>(null);
@@ -162,6 +163,7 @@ const MidiDB: React.FC = () => {
 
     const saveMidiFile = async () => {
         setLoading(true);
+
         let data: boolean = false;
         if (window.__USE__NODE__ === true) {
             // Node.js-Modus
@@ -188,11 +190,13 @@ const MidiDB: React.FC = () => {
         }
         setLoading(false);
         if (!data) {
-            alert('Fehler beim Speichern der Datei');
+            setHighlightState('error'); // Fehler -> Rot blinken
+        } else {
+            setHighlightState('success'); // Erfolg -> Grün blinken
         }
-        else {
-            alert('Gespeichert!');
-        }
+
+        // Highlight nach 1 Sekunde zurücksetzen
+        setTimeout(() => setHighlightState(null), 1000);
     };
 
     const scanMidiDir = async () => {
@@ -438,7 +442,7 @@ const MidiDB: React.FC = () => {
                                                 <textarea
                                                     rows={5}
                                                     readOnly
-                                                    value={midiData.midiParser?.lyrics?.join(", ") ?? ''}
+                                                    value={midiData.midiParser?.lyrics?.join("") ?? ''}
                                                 />
                                             </label>
                                             </p>
@@ -448,7 +452,7 @@ const MidiDB: React.FC = () => {
                                                     <textarea
                                                         rows={5}
                                                         readOnly
-                                                        value={midiData.midiParser?.text?.join(", ") ?? ''}
+                                                        value={midiData.midiParser?.text?.join("") ?? ''}
                                                     />
                                                 </label>
                                             </p>
@@ -470,19 +474,80 @@ const MidiDB: React.FC = () => {
                                     <div className="music-llm-section" style={{ marginBottom: 24 }}>
                                         <h2>Music LLM Result</h2>
                                         <div>
-                                            <p>Text: {musicLLM.text}</p>
-                                            <p>Artist: {musicLLM.artist}</p>
-                                            <p>Title: {musicLLM.title}</p>
-                                            <p>Release: {musicLLM.release}</p>
-                                            <p>Album: {musicLLM.album}</p>
+                                            <p>
+                                                Text: {musicLLM.text}
+                                                <button
+                                                    onClick={() => {
+                                                        if (musicLLM.text) {
+                                                            navigator.clipboard.writeText(musicLLM.text);
+                                                        }
+                                                    }}
+                                                    style={{ marginLeft: 8 }}
+                                                >
+                                                    Kopieren
+                                                </button>
+                                            </p>
+                                            <p>
+                                                Artist: {musicLLM.artist}
+                                                <button
+                                                    onClick={() => {
+                                                        if (musicLLM.artist) {
+                                                            navigator.clipboard.writeText(musicLLM.artist);
+                                                        }
+                                                    }}
+                                                    style={{ marginLeft: 8 }}
+                                                >
+                                                    Kopieren
+                                                </button>
+                                            </p>
+                                            <p>
+                                                Title: {musicLLM.title}
+                                                <button
+                                                    onClick={() => {
+                                                        if (musicLLM.title) {
+                                                            navigator.clipboard.writeText(musicLLM.title);
+                                                        }
+                                                    }}
+                                                    style={{ marginLeft: 8 }}
+                                                >
+                                                    Kopieren
+                                                </button>
+                                            </p>
+                                            <p>
+                                                Release: {musicLLM.release}
+                                                <button
+                                                    onClick={() => {
+                                                        if (musicLLM.release) {
+                                                            navigator.clipboard.writeText(musicLLM.release);
+                                                        }
+                                                    }}
+                                                    style={{ marginLeft: 8 }}
+                                                >
+                                                    Kopieren
+                                                </button>
+                                            </p>
+                                            <p>
+                                                Album: {musicLLM.album}
+                                                <button
+                                                    onClick={() => {
+                                                        if (musicLLM.album) {
+                                                            navigator.clipboard.writeText(musicLLM.album);
+                                                        }
+                                                    }}
+                                                    style={{ marginLeft: 8 }}
+                                                >
+                                                    Kopieren
+                                                </button>
+                                            </p>
+                                        </div>
                                             <button
                                                 type="button"
                                                 onClick={() => setMusicLLM(null)}
-                                                style={{ marginTop: 8, color: 'red' }}
+                                                style={{ marginLeft: 8, color: 'red' }}
                                             >
                                                 MusicLLM löschen
                                             </button>
-                                        </div>
+
                                     </div>
                                 )}
                                 {musicbrainz && (
@@ -490,11 +555,71 @@ const MidiDB: React.FC = () => {
                                         <h2>Musicbrainz Result</h2>
                                         {musicbrainz.top && musicbrainz.top.map((item, index) => (
                                             <div key={index} style={{ position: 'relative', paddingRight: 32 }}>
-                                                <p>Artist: {item.artist}</p>
-                                                <p>Title: {item.title}</p>
-                                                <p>Release: {item.firstReleaseDate}</p>
-                                                <p>Album: {item.album}</p>
-                                                <p>Tags: {item.tags && item.tags.map(tag => tag.name).join(', ')}</p>
+                                                <p>
+                                                    Artist: {item.artist}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (item.artist) {
+                                                                navigator.clipboard.writeText(item.artist);
+                                                            }
+                                                        }}
+                                                        style={{ marginLeft: 8 }}
+                                                    >
+                                                        Kopieren
+                                                    </button>
+                                                </p>
+                                                <p>
+                                                    Title: {item.title}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (item.title) {
+                                                                navigator.clipboard.writeText(item.title);
+                                                            }
+                                                        }}
+                                                        style={{ marginLeft: 8 }}
+                                                    >
+                                                        Kopieren
+                                                    </button>
+                                                </p>
+                                                <p>
+                                                    Release: {item.firstReleaseDate}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (item.firstReleaseDate) {
+                                                                navigator.clipboard.writeText(item.firstReleaseDate);
+                                                            }
+                                                        }}
+                                                        style={{ marginLeft: 8 }}
+                                                    >
+                                                        Kopieren
+                                                    </button>
+                                                </p>
+                                                <p>
+                                                    Album: {item.album}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (item.album) {
+                                                                navigator.clipboard.writeText(item.album);
+                                                            }
+                                                        }}
+                                                        style={{ marginLeft: 8 }}
+                                                    >
+                                                        Kopieren
+                                                    </button>
+                                                </p>
+                                                <p>
+                                                    Tags: {item.tags && item.tags.map(tag => tag.name).join(', ')}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (item.tags) {
+                                                                navigator.clipboard.writeText(item.tags.map(tag => tag.name).join(', '));
+                                                            }
+                                                        }}
+                                                        style={{ marginLeft: 8 }}
+                                                    >
+                                                        Kopieren
+                                                    </button>
+                                                </p>
                                                 <button
                                                     type="button"
                                                     onClick={() => {
@@ -513,11 +638,71 @@ const MidiDB: React.FC = () => {
                                         {musicbrainz.oldest && (
                                             <div style={{ position: 'relative', paddingRight: 32 }}>
                                                 <h3>Oldest Release</h3>
-                                                <p>Artist: {musicbrainz.oldest.artist}</p>
-                                                <p>Title: {musicbrainz.oldest.title}</p>
-                                                <p>Release: {musicbrainz.oldest.firstReleaseDate}</p>
-                                                <p>Album: {musicbrainz.oldest.album}</p>
-                                                <p>Tags: {musicbrainz.oldest.tags && musicbrainz.oldest.tags.map(tag => tag.name).join(', ')}</p>
+                                                <p>
+                                                    Artist: {musicbrainz.oldest.artist}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (musicbrainz.oldest && musicbrainz.oldest.artist) {
+                                                                navigator.clipboard.writeText(musicbrainz.oldest.artist);
+                                                            }
+                                                        }}
+                                                        style={{ marginLeft: 8 }}
+                                                    >
+                                                        Kopieren
+                                                    </button>
+                                                </p>
+                                                <p>
+                                                    Title: {musicbrainz.oldest.title}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (musicbrainz.oldest && musicbrainz.oldest.title) {
+                                                                navigator.clipboard.writeText(musicbrainz.oldest.title);
+                                                            }
+                                                        }}
+                                                        style={{ marginLeft: 8 }}
+                                                    >
+                                                        Kopieren
+                                                    </button>
+                                                </p>
+                                                <p>
+                                                    Release: {musicbrainz.oldest.firstReleaseDate}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (musicbrainz.oldest && musicbrainz.oldest.firstReleaseDate) {
+                                                                navigator.clipboard.writeText(musicbrainz.oldest.firstReleaseDate);
+                                                            }
+                                                        }}
+                                                        style={{ marginLeft: 8 }}
+                                                    >
+                                                        Kopieren
+                                                    </button>
+                                                </p>
+                                                <p>
+                                                    Album: {musicbrainz.oldest?.album}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (musicbrainz.oldest && musicbrainz.oldest.album) {
+                                                                navigator.clipboard.writeText(musicbrainz.oldest.album);
+                                                            }
+                                                        }}
+                                                        style={{ marginLeft: 8 }}
+                                                    >
+                                                        Kopieren
+                                                    </button>
+                                                </p>
+                                                <p>
+                                                    Tags: {musicbrainz.oldest && musicbrainz.oldest.tags && musicbrainz.oldest.tags.map(tag => tag.name).join(', ')}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (musicbrainz.oldest && musicbrainz.oldest.tags) {
+                                                                navigator.clipboard.writeText(musicbrainz.oldest.tags.map(tag => tag.name).join(', '));
+                                                            }
+                                                        }}
+                                                        style={{ marginLeft: 8 }}
+                                                    >
+                                                        Kopieren
+                                                    </button>
+                                                </p>
                                                 <button
                                                     type="button"
                                                     onClick={() => {
@@ -534,7 +719,9 @@ const MidiDB: React.FC = () => {
                             </div>
                         </div>
                         <div style={{ flex: 1, padding: 16, background: '#f5f5f5', borderRadius: 8 }}>
-                            <h2>Redaktionierte Informationen</h2>
+                            <h2 className={highlightState === 'success' ? 'blink-success' : highlightState === 'error' ? 'blink-error' : ''}>
+                                Redaktionierte Informationen
+                            </h2>
                             <form style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                                 {/* speichern button */}
                                 <button
@@ -639,7 +826,7 @@ const MidiDB: React.FC = () => {
                                     Tempo:
                                     <input
                                         type="number"
-                                        value={redactedData?.tempo ?? ''}
+                                        value={redactedData?.tempo ?? midiData?.midiParser?.tempo[0] ?? ''}
                                         onChange={e => handleredactedChange('tempo', e.target.value ? Number(e.target.value) : undefined)}
                                     />
                                 </label>
@@ -647,7 +834,7 @@ const MidiDB: React.FC = () => {
                                     Signature:
                                     <input
                                         type="text"
-                                        value={redactedData?.signature ?? ''}
+                                        value={redactedData?.signature ?? midiData?.midiParser?.signature[0] ?? ''}
                                         onChange={e => handleredactedChange('signature', e.target.value)}
                                     />
                                 </label>

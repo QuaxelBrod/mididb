@@ -27,3 +27,23 @@ body {
 input, textarea {
   user-select: text !important;
 }
+
+@keyframes blink-success {
+    0% { color: green; }
+    50% { color: transparent; }
+    100% { color: green; }
+}
+
+@keyframes blink-error {
+    0% { color: red; }
+    50% { color: transparent; }
+    100% { color: red; }
+}
+
+.blink-success {
+    animation: blink-success 1s ease-in-out;
+}
+
+.blink-error {
+    animation: blink-error 1s ease-in-out;
+}

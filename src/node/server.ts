@@ -46,12 +46,12 @@ app.use((err:any, req:any, res:any, next:any) => {
 
 
 (async () => {
-    let dbUrl = 'mongodb://localhost:27017'; // Standard-URL für MongoDB
+    let dbUrl = 'localhost:27017'; // Standard-URL für MongoDB
     if (process.env.MONGO_URL) {
         dbUrl = process.env.MONGO_URL; // URL aus der Umgebungsvariable verwenden
     }
     console.log('MongoDB URL:', dbUrl);
-    let dbName = 'midi'; // Standard-Datenbankname
+    let dbName = 'mididb'; // Standard-Datenbankname
     if (process.env.MONGO_DB_NAME) {
         dbName = process.env.MONGO_DB_NAME; // Datenbankname aus der Umgebungsvariable verwenden
     }
@@ -60,8 +60,9 @@ app.use((err:any, req:any, res:any, next:any) => {
     if (process.env.MONGO_DB_COLLECTION) {
         dbCollection = process.env.MONGO_DB_COLLECTION; // Collectionname aus der Umgebungsvariable verwenden
     }
-    console.log('MongoDB Collectionname:', dbCollection);
     // Initialize mongoDB
+    console.log('Initialisiere MongoDB...');
+    console.log(`server: dbUrl: ${dbUrl}, dbName: ${dbName}, dbCollection: ${dbCollection}`);
     await initMongo(dbUrl, dbName, dbCollection);
     console.log('MongoDB initialisiert');
 })();

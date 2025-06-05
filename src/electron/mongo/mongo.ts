@@ -3,11 +3,12 @@ import { MongoClient, Collection, Document } from "mongodb";
 import { IDBMidiDocument } from "./global";
 import { MidiFile } from "../midifile";
 import { SearchMidiDocumentsResult } from "../../web/MidiSearch";
-import { getTitleFromEntry , getArtistFromEntry} from "../../utli";
+import { getTitleFromEntry, getArtistFromEntry } from "../../utli";
+import { cli } from "webpack/types";
 
 
 
-const uri_fix = "mongodb://localhost:27017";
+const uri_fix = "localhost:27017"; // Standard URI für MongoDB
 const dbName_fix = "mididb";
 const collectionName_fix = "midifiles";
 
@@ -16,7 +17,8 @@ let collection: Collection<Document>;
 
 // Initialisierung: Verbindung und Index auf hash
 export async function initMongo(uri: string = uri_fix, dbName: string = dbName_fix, collectionName: string = collectionName_fix) {
-    client = new MongoClient(uri);
+    let mongourl = `mongodb://${uri}`;
+    client = new MongoClient(mongourl);
     await client.connect();
     const db = client.db(dbName);
     collection = db.collection(collectionName);
@@ -52,6 +54,9 @@ export async function initMongo(uri: string = uri_fix, dbName: string = dbName_f
 // Speichern oder updaten eines Dokuments (insert only if hash unique)
 export async function saveMidiDocument(doc: IDBMidiDocument) {
     try {
+        if (!client || !collection) {
+            throw new Error("MongoDB client or collection not initialized. Please call initMongo first.");
+        }
         doc.midifile.data = doc.midifile.data ? Buffer.from(doc.midifile.data as ArrayBuffer).toString('base64') : null;
         const result = await collection.updateOne(
             { "midifile.hash": doc.midifile.hash },
@@ -65,8 +70,11 @@ export async function saveMidiDocument(doc: IDBMidiDocument) {
 }
 
 export async function searchRedactedMidiDocuments(query: object, skip = 0, limit = 10000): Promise<SearchMidiDocumentsResult> {
+    if (!client || !collection) {
+        throw new Error("MongoDB client or collection not initialized. Please call initMongo first.");
+    }
     if (!query) {
-        query = { redacted: { $exists: true, $ne: null} };
+        query = { redacted: { $exists: true, $ne: null } };
     }
     else {
         query = {
@@ -122,34 +130,37 @@ export async function searchRedactedMidiDocuments(query: object, skip = 0, limit
 function makeQueryCaseInsensitive(query: any): any {
     // Bei leerer Query direkt zurückgeben
     if (!query || Object.keys(query).length === 0) return query;
-    
+
     // Bei $text-Suche nichts ändern (MongoDB Text-Indizes sind bereits case-insensitiv)
     if (query.$text) return query;
-    
+
     // Tiefe Kopie des Query-Objekts erstellen
     const result = JSON.parse(JSON.stringify(query));
-    
+
     // Rekursiv durch das Query-Objekt gehen
     Object.keys(result).forEach(key => {
         const value = result[key];
-        
+
         // Wenn der Wert ein String ist, in RegExp umwandeln
         if (typeof value === 'string' && !key.startsWith('$')) {
             result[key] = { $regex: value, $options: 'i' };
-        } 
+        }
         // Wenn es ein Objekt ist, rekursiv verarbeiten (außer bei speziellen MongoDB-Operatoren)
         else if (typeof value === 'object' && value !== null && !key.startsWith('$')) {
             result[key] = makeQueryCaseInsensitive(value);
         }
     });
-    
+
     return result;
 }
 
 
 export async function searchMidiDocuments(query: object, skip = 0, limit = 10000): Promise<SearchMidiDocumentsResult> {
+    if (!client || !collection) {
+        throw new Error("MongoDB client or collection not initialized. Please call initMongo first.");
+    }
     const caseInsensitiveQuery = makeQueryCaseInsensitive(query);
-    
+    console.log('Query an MongoDB:', JSON.stringify(caseInsensitiveQuery, null, 2));
     const cursor = collection.find(caseInsensitiveQuery).skip(skip).limit(limit);
     const rawDocs = await cursor.toArray();
     const total = await collection.countDocuments(query);
@@ -211,6 +222,9 @@ export async function searchMidiDocuments(query: object, skip = 0, limit = 10000
 export async function getDbEntryForHash(hash: string | null): Promise<IDBMidiDocument | null> {
     if (!hash) {
         return null;
+    }
+    if (!client || !collection) {
+        throw new Error("MongoDB client or collection not initialized. Please call initMongo first.");
     }
     const result = await collection.findOne({ "midifile.hash": hash }) as unknown as IDBMidiDocument;
     // base64String ist dein gespeicherter String
