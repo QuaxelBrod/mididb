@@ -35,6 +35,7 @@ const MidiDB: React.FC = () => {
     // midi Player
     // State für die aktuell abzuspielenden MIDI-Daten
     const [playerMidiData, setPlayerMidiData] = useState<{ name: string, data: ArrayBuffer } | null>(null);
+    const [canScanDir, setCanScanDir] = useState(false);
 
     // Ref für den rechten Bereich
     const mainContentRef = useRef<HTMLDivElement>(null);
@@ -45,6 +46,11 @@ const MidiDB: React.FC = () => {
             mainContentRef.current.scrollTo({ top: 0, behavior: 'auto' });
         }
     }, [view]);
+
+    useEffect(() => {
+        const electronApi = (window as any).electron as typeof window.electron | undefined;
+        setCanScanDir(!!electronApi?.scanMidiDir);
+    }, []);
 
     const openAndSendMidiFile = async (): Promise<IMidiFileInformation | null> => {
         return new Promise<IMidiFileInformation | null>((resolve) => {
@@ -200,12 +206,13 @@ const MidiDB: React.FC = () => {
     };
 
     const scanMidiDir = async () => {
-        if (window.__USE__NODE__ !== true) {
-            alert("Die Anwendung läuft nicht im Node.js-Modus.");
+        const electronApi = (window as any).electron as typeof window.electron | undefined;
+        if (!electronApi?.scanMidiDir) {
+            alert("Ordner-Scan ist nur in der Electron-App verfügbar.");
             return;
         }
         setLoading(true);
-        await window.electron.scanMidiDir();
+        await electronApi.scanMidiDir();
         setLoading(false);
     };
 
@@ -356,7 +363,7 @@ const MidiDB: React.FC = () => {
                 <button onClick={() => setView('search')} style={{ fontWeight: view === 'search' ? 'bold' : undefined }}>
                     Datenbank Suche
                 </button>
-                {window.__USE__NODE__ !== true && (
+                {canScanDir && (
                     <button onClick={scanMidiDir}>Scan dir</button>
                 )}
                 <br />

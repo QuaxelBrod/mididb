@@ -95,6 +95,7 @@ function extractJSON(text: string) {
 
 //let MODEL = "llama3.1:8b";
 let MODEL = "llama3.2:3b";
+//let MODEL = "gemma3:12b";
 //let MODEL = "gemma3:1b";
 
 class MusicLLM {
