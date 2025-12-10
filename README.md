@@ -117,6 +117,16 @@ Jede Menge... Derzeit reicht der Kram aber für mich
    npm run electron
    ```
 
+## Dedupe-Tool für MIDI-Inhalte (Text ignorieren)
+
+- Script: `npm run dedupe:content` – berechnet Content-Hashes, die Text-Metaevents ignorieren.
+- Shell-Wrapper mit Defaults: `bash scripts/dedupe_content.sh`
+  - Optional: `MONGO_URL`, `MONGO_DB_NAME`, `MONGO_DB_COLLECTION` setzen (Defaults: `192.168.178.29:27017`, `mididb`, `midifiles`).
+  - Nur zählen (read-only): `bash scripts/dedupe_content.sh`
+  - Merge (behalten + zusammenführen + Duplikate löschen): `bash scripts/dedupe_content.sh --merge`
+  - Merge-Trockenlauf: `bash scripts/dedupe_content.sh --merge --dry-run`
+- Merge-Logik: Wählt pro Content-Hash den “reichsten” Datensatz (reviewed/redacted/musicbrainz/musicLLM) als Primär, sammelt alle `fileName`-Einträge, füllt fehlende Felder aus MusicLLM/Redacted/MusicBrainz auf, setzt `validationState` auf reviewed wenn vorhanden, aktualisiert Primär und löscht die übrigen Duplikate.
+
 
 ## Docker
 
