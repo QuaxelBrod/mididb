@@ -69,7 +69,7 @@ export async function saveMidiDocument(doc: IDBMidiDocument) {
     }
 }
 
-export async function searchRedactedMidiDocuments(query: object, skip = 0, limit = 10000): Promise<SearchMidiDocumentsResult> {
+export async function searchRedactedMidiDocuments(query: any, skip = 0, limit = 10000): Promise<SearchMidiDocumentsResult> {
     if (!client || !collection) {
         throw new Error("MongoDB client or collection not initialized. Please call initMongo first.");
     }
@@ -81,6 +81,17 @@ export async function searchRedactedMidiDocuments(query: object, skip = 0, limit
             ...query,
             redacted: { $exists: true, $ne: null }
         };
+    }
+
+    // Convert string _id to ObjectId if present
+    if (query._id && typeof query._id === 'string') {
+        const { ObjectId } = require('mongodb');
+        try {
+            query._id = new ObjectId(query._id);
+        } catch (err) {
+            console.error('Invalid ObjectId format:', query._id);
+            return { docs: [], total: 0 };
+        }
     }
 
     // Case-insensitive machen
@@ -140,6 +151,11 @@ function makeQueryCaseInsensitive(query: any): any {
     // Rekursiv durch das Query-Objekt gehen
     Object.keys(result).forEach(key => {
         const value = result[key];
+
+        // Skip exact match fields (hash, _id, ObjectId)
+        if (key === 'midifile.hash' || key === '_id') {
+            return; // Keep exact value
+        }
 
         // Wenn der Wert ein String ist, in RegExp umwandeln
         if (typeof value === 'string' && !key.startsWith('$')) {
