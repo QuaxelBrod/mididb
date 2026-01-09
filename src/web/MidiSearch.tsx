@@ -211,7 +211,7 @@ export default MidiSearch;
 async function searchMidiDocumentsNode(arg0: { $text: { $search: string; }; }, skip: number, pageSize: number): Promise<SearchMidiDocumentsResult> {
     try {
         const basePath = window.__BASE_PATH__ || '';
-        const apiUrl = `${basePath}/midi/searchMidiDocuments`;
+        const apiUrl = (basePath ? basePath : '') + '/midi/searchMidiDocuments';
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {

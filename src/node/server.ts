@@ -25,11 +25,13 @@ app.use((req, res, next) => {
 
     const originalSend = res.send;
     res.send = function (body) {
-        if (typeof body === 'string' && req.basePath) {
-            // Rewrite href="/..." and src="/..." to include basePath
-            body = body.replace(/(href|src)=["']\/([^"']*)["']/g, `$1="${req.basePath}/$2"`);
-            // Inject basePath into a global variable for the frontend
-            body = body.replace('__BASE_PATH__', req.basePath);
+        if (typeof body === 'string') {
+            if (req.basePath) {
+                // Rewrite href="/..." and src="/..." to include basePath
+                body = body.replace(/(href|src)=["']\/([^"']*)["']/g, `$1="${req.basePath}/$2"`);
+            }
+            // Always replace placeholder (with basePath or empty string)
+            body = body.replace('__BASE_PATH__', req.basePath || '');
         }
         return originalSend.call(this, body);
     };
@@ -49,14 +51,16 @@ app.get('/test', (req, res) => {
     res.send('Test erfolgreich!');
 });
 
-// Statische Dateien (React-Build) ausliefern
-app.use(express.static(path.join(__dirname, '../static')));
+// Statische Dateien (React-Build) ausliefern, aber autom. index.html deaktivieren
+app.use(express.static(path.join(__dirname, '../static'), { index: false }));
 
 // Füge dies hinzu:
 app.get(/.*/, (req, res) => {
     const indexPath = path.join(__dirname, '../static/index.html');
     if (fs.existsSync(indexPath)) {
-        const content = fs.readFileSync(indexPath, 'utf8');
+        let content = fs.readFileSync(indexPath, 'utf8');
+        // Sicherstellen, dass __BASE_PATH__ immer (global) ersetzt wird
+        content = content.replace(/__BASE_PATH__/g, req.basePath || '');
         res.send(content);
     } else {
         res.status(404).send('index.html not found');

@@ -68,7 +68,7 @@ const MidiDB: React.FC = () => {
                 // setLoading(true);
                 try {
                     const basePath = window.__BASE_PATH__ || '';
-                    const apiUrl = `${basePath}/midi/openMidiFile`;
+                    const apiUrl = (basePath ? basePath : '') + '/midi/openMidiFile';
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
@@ -118,7 +118,7 @@ const MidiDB: React.FC = () => {
                 }
 
                 const basePath = window.__BASE_PATH__ || '';
-                const apiUrl = `${basePath}/midi/saveMidiFile`;
+                const apiUrl = (basePath ? basePath : '') + '/midi/saveMidiFile';
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
@@ -237,7 +237,7 @@ const MidiDB: React.FC = () => {
         try {
             console.log('Lade Soundfont vom Server...');
             const basePath = window.__BASE_PATH__ || '';
-            const apiUrl = `${basePath}/alex_gm.sf2`;
+            const apiUrl = (basePath ? basePath : '') + '/alex_gm.sf2';
             const response = await fetch(apiUrl);
 
             if (!response.ok) {
@@ -299,7 +299,7 @@ const MidiDB: React.FC = () => {
             // setLoading(true);
             try {
                 const basePath = window.__BASE_PATH__ || '';
-                const apiUrl = `${basePath}/midi/getMidiFileByHash`;
+                const apiUrl = (basePath ? basePath : '') + '/midi/getMidiFileByHash';
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
