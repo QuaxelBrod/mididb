@@ -30,8 +30,8 @@ app.use((req, res, next) => {
                 // Rewrite href="/..." and src="/..." to include basePath
                 body = body.replace(/(href|src)=["']\/([^"']*)["']/g, `$1="${req.basePath}/$2"`);
             }
-            // Always replace placeholder (with basePath or empty string)
-            body = body.replace('__BASE_PATH__', req.basePath || '');
+            // Inject basePath into a global variable for the frontend
+            body = body.replace('MIDIDB_BASE_PATH_PLACEHOLDER', req.basePath || '');
         }
         return originalSend.call(this, body);
     };
@@ -59,8 +59,8 @@ app.get(/.*/, (req, res) => {
     const indexPath = path.join(__dirname, '../static/index.html');
     if (fs.existsSync(indexPath)) {
         let content = fs.readFileSync(indexPath, 'utf8');
-        // Sicherstellen, dass __BASE_PATH__ immer (global) ersetzt wird
-        content = content.replace(/__BASE_PATH__/g, req.basePath || '');
+        // Sicherstellen, dass der Platzhalter immer (global) ersetzt wird
+        content = content.replace(/MIDIDB_BASE_PATH_PLACEHOLDER/g, req.basePath || '');
         res.send(content);
     } else {
         res.status(404).send('index.html not found');
