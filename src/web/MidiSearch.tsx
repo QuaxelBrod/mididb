@@ -58,33 +58,47 @@ const MidiSearch: React.FC<MidiSearchProps> = ({
     const selectedRowRef = useRef<HTMLTableRowElement>(null);
 
     /**
-     * Builds a search string by splitting the input on whitespace, filtering out empty strings,
-     * wrapping each word in double quotes, and joining them with spaces.
-     *
-     * @param input - The input string to process.
-     * @returns A string where each word from the input is wrapped in double quotes and separated by spaces.
+     * Builds a MongoDB query based on the input string.
+     * - If input looks like a MongoDB ObjectId (24 hex chars), search by _id
+     * - If input looks like a SHA256 hash (64 hex chars), search by midifile.hash
+     * - Otherwise, perform a text search
      */
-    function buildAndSearchString(input: string) {
-        return input
+    function buildSearchQuery(input: string): any {
+        const trimmed = input.trim();
+
+        // Check if it's a MongoDB ObjectId (24 hex characters)
+        if (/^[0-9a-fA-F]{24}$/.test(trimmed)) {
+            return { _id: trimmed };
+        }
+
+        // Check if it's a SHA256 hash (64 hex characters)
+        if (/^[0-9a-fA-F]{64}$/.test(trimmed)) {
+            return { 'midifile.hash': trimmed };
+        }
+
+        // Default: text search
+        const searchString = trimmed
             .split(/\s+/)
             .filter(Boolean)
             .map(word => `"${word}"`)
             .join(' ');
+
+        return { $text: { $search: searchString } };
     }
 
     const handleSearch = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         setLoading(true);
         const skip = (page - 1) * pageSize;
-        const searchString = buildAndSearchString(query);
+        const searchQuery = buildSearchQuery(query);
         let res: SearchMidiDocumentsResult = { docs: [], total: 0 };
         if (window.__USE__NODE__) {
             // node load
-            res = await searchMidiDocumentsNode({ $text: { $search: searchString } }, skip, pageSize);
+            res = await searchMidiDocumentsNode(searchQuery, skip, pageSize);
         }
         else {
             // electron load
-            res = await window.electron.searchMidiDocuments({ $text: { $search: searchString } }, skip, pageSize);
+            res = await window.electron.searchMidiDocuments(searchQuery, skip, pageSize);
         }
         setResults(res.docs || []);
         setTotal(res.total || 0);
@@ -95,11 +109,11 @@ const MidiSearch: React.FC<MidiSearchProps> = ({
         if (query) {
             setLoading(true);
             const skip = 0; //(page - 1) * pageSize;
-            const searchString = buildAndSearchString(query);
+            const searchQuery = buildSearchQuery(query);
 
             if (window.__USE__NODE__) {
                 // node load
-                searchMidiDocumentsNode({ $text: { $search: searchString } }, skip, pageSize)
+                searchMidiDocumentsNode(searchQuery, skip, pageSize)
                     .then((res: SearchMidiDocumentsResult) => {
                         setResults(res.docs || []);
                         setTotal(res.total || 0);
@@ -108,7 +122,7 @@ const MidiSearch: React.FC<MidiSearchProps> = ({
             }
             else {
                 // electron load
-                window.electron.searchMidiDocuments({ $text: { $search: searchString } }, skip, pageSize)
+                window.electron.searchMidiDocuments(searchQuery, skip, pageSize)
                     .then((res: SearchMidiDocumentsResult) => {
                         setResults(res.docs || []);
                         setTotal(res.total || 0);
