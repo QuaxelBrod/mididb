@@ -153,7 +153,13 @@ function makeQueryCaseInsensitive(query: any): any {
         const value = result[key];
 
         // Skip exact match fields (hash, _id, ObjectId)
-        if (key === 'midifile.hash' || key === '_id') {
+        if (key === 'midifile.hash') {
+            if (typeof value === 'string') {
+                result[key] = value.toLowerCase();
+            }
+            return; // Keep exact value (normalized)
+        }
+        if (key === '_id') {
             return; // Keep exact value
         }
 
