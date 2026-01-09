@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 declare global {
     interface Window {
         __USE__NODE__?: boolean;
+        __BASE_PATH__?: string;
     }
 }
 
@@ -97,7 +98,7 @@ const MidiSearch: React.FC<MidiSearchProps> = ({
             const searchString = buildAndSearchString(query);
 
             if (window.__USE__NODE__) {
-            // node load
+                // node load
                 searchMidiDocumentsNode({ $text: { $search: searchString } }, skip, pageSize)
                     .then((res: SearchMidiDocumentsResult) => {
                         setResults(res.docs || []);
@@ -126,13 +127,13 @@ const MidiSearch: React.FC<MidiSearchProps> = ({
         }
     }, [results, selectedHash]);
 
-useEffect(() => {
-    const timer = setTimeout(() => {
-        setQuery(inputValue); // setQuery wird erst nach 2 Sekunden ohne Änderungen aufgerufen
-    }, 2000);
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setQuery(inputValue); // setQuery wird erst nach 2 Sekunden ohne Änderungen aufgerufen
+        }, 2000);
 
-    return () => clearTimeout(timer); // Timer zurücksetzen, wenn sich inputValue ändert
-}, [inputValue, setQuery]);
+        return () => clearTimeout(timer); // Timer zurücksetzen, wenn sich inputValue ändert
+    }, [inputValue, setQuery]);
 
     const handlePageChange = (newPage: number) => {
         setPage(newPage);
@@ -209,7 +210,9 @@ export default MidiSearch;
 
 async function searchMidiDocumentsNode(arg0: { $text: { $search: string; }; }, skip: number, pageSize: number): Promise<SearchMidiDocumentsResult> {
     try {
-        const response = await fetch('/midi/searchMidiDocuments', {
+        const basePath = window.__BASE_PATH__ || '';
+        const apiUrl = `${basePath}/midi/searchMidiDocuments`;
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -220,12 +223,12 @@ async function searchMidiDocumentsNode(arg0: { $text: { $search: string; }; }, s
                 limit: pageSize
             })
         });
-        
+
         if (!response.ok) {
             console.error('Fehler bei der Suche:', response.statusText);
             return { docs: [], total: 0 };
         }
-        
+
         const data = await response.json();
         return data as SearchMidiDocumentsResult;
     } catch (err) {

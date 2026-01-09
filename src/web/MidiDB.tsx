@@ -7,6 +7,7 @@ import { getTitleFromEntry, getArtistFromEntry } from '../utli';
 declare global {
     interface Window {
         __USE__NODE__?: boolean;
+        __BASE_PATH__?: string;
     }
 }
 
@@ -66,7 +67,9 @@ const MidiDB: React.FC = () => {
                 // Sende die Datei an den Node-Server
                 // setLoading(true);
                 try {
-                    const response = await fetch('/midi/openMidiFile', {
+                    const basePath = window.__BASE_PATH__ || '';
+                    const apiUrl = `${basePath}/midi/openMidiFile`;
+                    const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/octet-stream',
@@ -104,42 +107,38 @@ const MidiDB: React.FC = () => {
 
     const saveMidiFileToNode = async (midiData: IMidiFileInformation) => {
         return new Promise<boolean>(async (resolve) => {
-            // Sende die Datei an den Node-Server
-            // setLoading(true);
             try {
                 if (midiData && midiData.midifile && midiData.midifile.data) {
-                    // ArrayBuffer in einen binären String konvertieren
                     const uint8Array = new Uint8Array(midiData.midifile.data as ArrayBuffer);
                     let binaryString = '';
                     for (let i = 0; i < uint8Array.length; i++) {
                         binaryString += String.fromCharCode(uint8Array[i]);
                     }
-
-                    // Binären String zu Base64 konvertieren
                     midiData.midifile.data = btoa(binaryString);
-                }                // Convert the ArrayBuffer to a Base64 string
+                }
 
-                const response = await fetch('/midi/saveMidiFile', {
+                const basePath = window.__BASE_PATH__ || '';
+                const apiUrl = `${basePath}/midi/saveMidiFile`;
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(midiData)
                 });
+
                 if (!response.ok) {
                     alert('Fehler beim Senden der Datei: ' + response.statusText);
                     resolve(false);
+                    return;
                 }
                 const data = await response.json();
-
-                // Hier kannst du das Ergebnis weiterverarbeiten:
                 resolve(data.success);
             } catch (err) {
                 alert('Fehler beim Senden der Datei');
                 resolve(false);
             }
-        }
-        );
+        });
     };
 
     const loadMidiFile = async () => {
@@ -237,7 +236,9 @@ const MidiDB: React.FC = () => {
     const loadSoundfontFromServer = async () => {
         try {
             console.log('Lade Soundfont vom Server...');
-            const response = await fetch('alex_gm.sf2');
+            const basePath = window.__BASE_PATH__ || '';
+            const apiUrl = `${basePath}/alex_gm.sf2`;
+            const response = await fetch(apiUrl);
 
             if (!response.ok) {
                 throw new Error(`Fehler beim Laden der Soundfont: ${response.status} ${response.statusText}`);
@@ -295,8 +296,11 @@ const MidiDB: React.FC = () => {
         return new Promise<IMidiFileInformation | null>(async (resolve) => {
             // Sende die Datei an den Node-Server
             // setLoading(true);
+            // setLoading(true);
             try {
-                const response = await fetch('/midi/getMidiFileByHash', {
+                const basePath = window.__BASE_PATH__ || '';
+                const apiUrl = `${basePath}/midi/getMidiFileByHash`;
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -547,13 +551,13 @@ const MidiDB: React.FC = () => {
                                                 </button>
                                             </p>
                                         </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setMusicLLM(null)}
-                                                style={{ marginLeft: 8, color: 'red' }}
-                                            >
-                                                MusicLLM löschen
-                                            </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setMusicLLM(null)}
+                                            style={{ marginLeft: 8, color: 'red' }}
+                                        >
+                                            MusicLLM löschen
+                                        </button>
 
                                     </div>
                                 )}

@@ -28,6 +28,8 @@ app.use((req, res, next) => {
         if (typeof body === 'string' && req.basePath) {
             // Rewrite href="/..." and src="/..." to include basePath
             body = body.replace(/(href|src)=["']\/([^"']*)["']/g, `$1="${req.basePath}/$2"`);
+            // Inject basePath into a global variable for the frontend
+            body = body.replace('__BASE_PATH__', req.basePath);
         }
         return originalSend.call(this, body);
     };
