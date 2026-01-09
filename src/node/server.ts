@@ -1,6 +1,7 @@
 // server/app.js
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import apiRouter from './routes/api.js';
 import { initMongo } from '../electron/mongo/mongo';
 
@@ -18,19 +19,15 @@ const app = express();
 const port = 3000;
 
 
-// Ganz oben in server.ts nach den Imports
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-    // Hole den Basis-Pfad aus dem Header (z. B. "/app")
     const basePath = req.headers['x-forwarded-prefix'] as string || '';
-    // Füge den Basis-Pfad zur Request-Instanz hinzu
     req.basePath = basePath;
-    // Optional: Passe die URL für interne Weiterleitungen an
-    req.originalUrl = basePath + req.originalUrl;
+
     const originalSend = res.send;
     res.send = function (body) {
         if (typeof body === 'string' && req.basePath) {
-            body = body.replace(/(href|src)=["'](\/)/g, `$1="$2${req.basePath}/`);
+            // Rewrite href="/..." and src="/..." to include basePath
+            body = body.replace(/(href|src)=["']\/([^"']*)["']/g, `$1="${req.basePath}/$2"`);
         }
         return originalSend.call(this, body);
     };
@@ -60,7 +57,13 @@ app.use(express.static(path.join(__dirname, '../static')));
 
 // Füge dies hinzu:
 app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, '../static/index.html'));
+    const indexPath = path.join(__dirname, '../static/index.html');
+    if (fs.existsSync(indexPath)) {
+        const content = fs.readFileSync(indexPath, 'utf8');
+        res.send(content);
+    } else {
+        res.status(404).send('index.html not found');
+    }
 });
 // app.get('*', (req, res) => {
 //     res.sendFile(path.join(__dirname, './static/index.html'));

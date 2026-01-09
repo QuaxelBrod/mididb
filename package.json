@@ -16,7 +16,8 @@
     "build:web": "webpack --config webpack.react.config.ts --env ts-node/register --env development --mode development",
     "build:server": "npm run build:web && tsc -p src/node/ --outDir dist && npm run copy:soundfonts",
     "start:server": "npm run build:server && node dist/node/server.js",
-    "dedupe:content": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"CommonJS\"}' node -r ts-node/register/transpile-only src/tools/hashMidiContent.ts"
+    "dedupe:content": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"CommonJS\"}' node -r ts-node/register/transpile-only src/tools/hashMidiContent.ts",
+    "import:pattern": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"CommonJS\"}' node -r ts-node/register/transpile-only src/tools/import_pattern.ts"
   },
   "keywords": [],
   "author": "A300851",
