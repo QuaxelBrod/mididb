@@ -43,11 +43,6 @@ app.get('/healthcheck', (_req, res) => {
 
 app.use('/midi', apiRouter);
 
-// Middleware für HTML-Rewrite
-app.use((req, res, next) => {
-
-});
-
 app.get('/test', (req, res) => {
     res.send('Test erfolgreich!');
 });
