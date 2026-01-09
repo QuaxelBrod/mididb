@@ -11,7 +11,7 @@ const config: Configuration = {
   output: {
     path: path.resolve(__dirname, 'dist/static'),
     filename: 'bundle.js',
-    publicPath: '/',
+    publicPath: 'auto',
     clean: true,
   },
   module: {
