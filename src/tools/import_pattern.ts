@@ -91,6 +91,16 @@ function parseFilename(fileName: string): { artist: string; title: string } | nu
         };
     }
 
+    // Fallback strategy: Replace all underscores with spaces and treat as full Title
+    // MusicBrainz should be able to find it via broad search
+    const cleaned = basename.replace(/_/g, ' ').trim();
+    if (cleaned.length > 0) {
+        return {
+            artist: "", // Empty artist triggers fuzzy search
+            title: cleaned
+        };
+    }
+
     return null;
 }
 
@@ -104,7 +114,7 @@ function getAllMidiFiles(dir: string, fileList: string[] = []): string[] {
             getAllMidiFiles(filePath, fileList);
         } else {
             const ext = path.extname(file).toLowerCase();
-            if (ext === '.mid' || ext === '.midi') {
+            if (ext === '.mid' || ext === '.midi' || ext === '.kar') {
                 fileList.push(filePath);
             }
         }
@@ -182,6 +192,7 @@ async function main() {
             if (!docToSave.redacted) docToSave.redacted = {};
             docToSave.redacted.artist = artist;
             docToSave.redacted.title = title;
+            docToSave.redacted.text = [...(parserJson.lyrics || []), ...(parserJson.text || [])].join('\n');
             docToSave.validationState = 'open';
 
             if (docToSave.midifile && docToSave.midifile.fileName) {
@@ -194,7 +205,8 @@ async function main() {
             docToSave = {
                 redacted: {
                     artist,
-                    title
+                    title,
+                    text: [...(parserJson.lyrics || []), ...(parserJson.text || [])].join('\n')
                 },
                 validationState: 'open',
                 midifile: {

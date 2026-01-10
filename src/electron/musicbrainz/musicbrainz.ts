@@ -206,6 +206,15 @@ export async function getTopListForParams(params: IMusicbrainzRequestParams, n =
             query: `recording:"${params.title}"`,
             limit: 100
         });
+
+        if (result.recordings.length === 0) {
+            // Fallback 2: Broad search (without "recording:" prefix)
+            // Useful when title contains artist name (e.g. "Artist - Title")
+            result = await mbApi.search('recording', {
+                query: params.title,
+                limit: 100
+            });
+        }
     };
 
     let list = extractTitleArtistScore(result);
