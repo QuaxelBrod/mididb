@@ -124,4 +124,75 @@ router.post('/searchMidiDocuments', async (req, res) => {
     }
 });
 
+
+// POST /midi/importFromUrl
+router.post('/importFromUrl', async (req, res) => {
+    try {
+        const { url, sourceMetadata } = req.body;
+        if (!url) {
+            return res.status(400).json({ error: 'URL is required' });
+        }
+
+        // 1. Download file
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch URL: ${response.statusText}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+
+        // 2. Parse & Hash (this reuses logic from opened files)
+        // We simulate a filename from the URL or default
+        const fileName = url.split('/').pop() || 'downloaded.mid';
+
+        let midi_file = await parse_midi_file(arrayBuffer, fileName);
+        if (!midi_file) {
+            return res.status(400).json({ error: 'Failed to parse MIDI content' });
+        }
+
+        // 3. Check DB
+        const existing = await getDbEntryForHash(midi_file.midifile.hash!);
+
+        if (existing) {
+            // Already exists - maybe update metadata?
+            // For now, we just return "skipped" but with success: true
+            console.log(`MIDI existing: ${midi_file.midifile.hash}`);
+            return res.json({ success: true, status: 'skipped', id: (existing as any)._id, hash: existing.midifile.hash });
+        }
+
+        // 4. Enrich & Save
+        midi_file = await load_llm_for_midi_file(midi_file);
+        midi_file = await load_brainz_for_midi_file(midi_file);
+        if (midi_file) {
+            midi_file = validationStateMidiFile(midi_file);
+
+            // Add source metadata if provided (e.g. reddit link title)
+            if (sourceMetadata) {
+                // Ensure redacted object exists
+                if (!midi_file.redacted) midi_file.redacted = {};
+                // If we don't have a title yet, use source metadata
+                if (!midi_file.redacted.title && sourceMetadata.title) {
+                    midi_file.redacted.title = sourceMetadata.title;
+                }
+                // Store original source info in redacted.tags or a new field?
+                // Let's verify if we can extend the schema or put it in tags.
+                // For now, put it in tags
+                if (!midi_file.redacted.tags) midi_file.redacted.tags = [];
+                midi_file.redacted.tags.push({ name: `source:${url}` });
+                if (sourceMetadata.postId) {
+                    midi_file.redacted.tags.push({ name: `reddit:post:${sourceMetadata.postId}` });
+                }
+            }
+        }
+
+        // Save
+        const id = await saveMidiDocument(midi_file as IDBMidiDocument);
+        console.log(`MIDI imported: ${midi_file?.midifile.hash}`);
+        return res.json({ success: true, status: 'imported', id, hash: midi_file?.midifile.hash });
+
+    } catch (err: any) {
+        console.error('Error importing from URL:', err);
+        return res.status(500).json({ error: err.message || 'Internal Server Error' });
+    }
+});
+
 export default router;
