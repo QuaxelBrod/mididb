@@ -127,9 +127,10 @@ function getAllMidiFiles(dir: string, fileList: string[] = []): string[] {
 async function main() {
     const args = process.argv.slice(2);
     if (args.length === 0) {
-        console.log('Usage: npx ts-node src/tools/import_pattern.ts <directory>');
+        console.log('Usage: npx ts-node src/tools/import_pattern.ts <directory> [styleTag]');
         process.exit(1);
     }
+    const styleTag = args[1]; // Optional style tag
 
     const importDir = path.resolve(args[0]);
     if (!fs.existsSync(importDir)) {
@@ -195,6 +196,16 @@ async function main() {
             docToSave.redacted.text = [...(parserJson.lyrics || []), ...(parserJson.text || [])].join('\n');
             docToSave.validationState = 'open';
 
+            // Add style tag if provided
+            if (styleTag) {
+                if (!docToSave.redacted.tags) docToSave.redacted.tags = [];
+                // Check if tag already exists to avoid duplicates
+                const tagExists = docToSave.redacted.tags.some((t: any) => t.name === styleTag);
+                if (!tagExists) {
+                    docToSave.redacted.tags.push({ name: styleTag });
+                }
+            }
+
             if (docToSave.midifile && docToSave.midifile.fileName) {
                 if (!docToSave.midifile.fileName.includes(fileName)) {
                     docToSave.midifile.fileName.push(fileName);
@@ -206,7 +217,8 @@ async function main() {
                 redacted: {
                     artist,
                     title,
-                    text: [...(parserJson.lyrics || []), ...(parserJson.text || [])].join('\n')
+                    text: [...(parserJson.lyrics || []), ...(parserJson.text || [])].join('\n'),
+                    tags: styleTag ? [{ name: styleTag }] : []
                 },
                 validationState: 'open',
                 midifile: {

@@ -116,7 +116,53 @@ Jede Menge... Derzeit reicht der Kram aber für mich
    ```sh
    npm run electron
    ```
+## Massen-Import Script (Pattern Import)
 
+Ein leistungsfähiges Tool zum Importieren großer Mengen von MIDI/KAR-Dateien (`src/tools/import_pattern.ts`).
+
+**Features:**
+- **Unterstützte Formate:** `.mid`, `.midi`, `.kar`
+- **Intelligentes Filename-Parsing:** Erkennt `Artist - Title.mid` sowie `ARTIST_TITLE.mid` (ersetzt Unterstriche durch Leerzeichen).
+- **Metadata Enrichment:** Sucht automatisch auf MusicBrainz nach Metadaten. Wenn die exakte Suche fehlschlägt, wird eine breite Suche mit dem bereinigten Dateinamen versucht.
+- **Lyrics/Text Extraktion:** Liest Songtexte aus MIDI/KAR-Dateien und speichert sie im Feld `redacted.text`.
+- **Hashing & Deduplizierung:** Verwendet inhaltsbasiertes Hashing (ignoriert Metadaten), um echte Duplikate zu erkennen.
+- **Tagging:** Optionaler Style/Genre-Tag als Argument.
+
+**Nutzung:**
+```bash
+npx ts-node src/tools/import_pattern.ts <Verzeichnis> [OptionalerStyleTag]
+# Beispiel:
+npx ts-node src/tools/import_pattern.ts ./archiv/pop "Pop"
+```
+
+---
+
+## Erweiterte Suche
+
+Die Suche unterstützt nun verschiedene Modi:
+- **Volltextsuche:** Eingabe von Titel, Artist, Lyrics, etc.
+- **ID-Suche:** Eingabe einer 24-stelligen MongoDB ObjectId (findet exaktes Dokument).
+- **Hash-Suche:** Eingabe eines 64-stelligen SHA256-Hashes (findet exaktes MIDI-File).
+- **Case-Insensitivity:** Hashes werden automatisch normalisiert.
+
+---
+
+## Automatisierte Importe (n8n / API)
+
+Der Server bietet einen Endpunkt für automatisierte Importe (z.B. via n8n, Reddit-Crawler):
+
+**Endpoint:** `POST /midi/importFromUrl`
+**Body:**
+```json
+{
+  "url": "https://example.com/song.mid",
+  "sourceMetadata": {
+    "title": "Reddit Post Title",
+    "postId": "t3_xyz123"
+  }
+}
+```
+**Funktion:** Lädt die Datei herunter, hasht sie, prüft Duplikate, reichert Daten via MusicBrainz an und speichert alles.
 ## Dedupe-Tool für MIDI-Inhalte (Text ignorieren)
 
 - Script: `npm run dedupe:content` – berechnet Content-Hashes, die Text-Metaevents ignorieren.
@@ -137,7 +183,12 @@ docker build -t mididb-server .
 
 # Container starten und Port 3000 freigeben
 docker run -p 3000:3000 mididb-server
+# Container starten und Port 3000 freigeben (Empfohlen: Nutzung mit Docker Compose und Caddy)
+docker compose up -d --build
 ```
+
+**Subpath Deployment:**
+Die Anwendung unterstützt den Betrieb unter einem Subpfad (z.B. `/mididb`), wenn ein Reverse Proxy (wie Caddy) den Header `X-Forwarded-Prefix` setzt. Der Server injiziert dann automatisch den korrekten `basePath` in das Frontend.
 
 Environment Variablen für die Datenbank:
 
