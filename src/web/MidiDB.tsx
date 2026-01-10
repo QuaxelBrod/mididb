@@ -623,7 +623,20 @@ const MidiDB: React.FC = () => {
                                                     <button
                                                         onClick={() => {
                                                             if (item.tags) {
-                                                                navigator.clipboard.writeText(item.tags.map(tag => tag.name).join(', '));
+                                                                const tagString = item.tags.map(tag => tag.name).join(', ');
+                                                                navigator.clipboard.writeText(tagString);
+
+                                                                // Also add to redacted tags
+                                                                const currentTags = Array.isArray(redactedData?.tags) ? [...redactedData!.tags] : [];
+                                                                const newTagsToAdd = item.tags.filter(t => !currentTags.some(ct => ct.name === t.name));
+
+                                                                if (newTagsToAdd.length > 0) {
+                                                                    const mergedTags = [
+                                                                        ...currentTags,
+                                                                        ...newTagsToAdd.map(t => ({ name: t.name }))
+                                                                    ];
+                                                                    handleredactedChange('tags', mergedTags);
+                                                                }
                                                             }
                                                         }}
                                                         style={{ marginLeft: 8 }}
@@ -706,7 +719,21 @@ const MidiDB: React.FC = () => {
                                                     <button
                                                         onClick={() => {
                                                             if (musicbrainz.oldest && musicbrainz.oldest.tags) {
-                                                                navigator.clipboard.writeText(musicbrainz.oldest.tags.map(tag => tag.name).join(', '));
+                                                                const tags = musicbrainz.oldest.tags;
+                                                                const tagString = tags.map(tag => tag.name).join(', ');
+                                                                navigator.clipboard.writeText(tagString);
+
+                                                                // Also add to redacted tags
+                                                                const currentTags = Array.isArray(redactedData?.tags) ? [...redactedData!.tags] : [];
+                                                                const newTagsToAdd = tags.filter((t: any) => !currentTags.some(ct => ct.name === t.name));
+
+                                                                if (newTagsToAdd.length > 0) {
+                                                                    const mergedTags = [
+                                                                        ...currentTags,
+                                                                        ...newTagsToAdd.map((t: any) => ({ name: t.name }))
+                                                                    ];
+                                                                    handleredactedChange('tags', mergedTags);
+                                                                }
                                                             }
                                                         }}
                                                         style={{ marginLeft: 8 }}
