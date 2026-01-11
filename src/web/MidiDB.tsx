@@ -890,15 +890,7 @@ const MidiDB: React.FC = () => {
                                 Redaktionierte Informationen
                             </h2>
                             <form style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                {/* speichern button */}
-                                <button
-                                    type="button"
-                                    onClick={saveMidiFile}
-                                    disabled={!redactedData || loading}
-                                    style={{ marginBottom: 16 }}
-                                >
-                                    Speichern
-                                </button>
+
 
                                 <label>
                                     Title:
@@ -1006,12 +998,20 @@ const MidiDB: React.FC = () => {
                                         onChange={e => handleredactedChange('signature', e.target.value)}
                                     />
                                 </label>
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>{/* speichern button */}
+                                    <button
+                                        type="button"
+                                        onClick={saveMidiFile}
+                                        disabled={!redactedData || loading}
+                                        style={{ backgroundColor: '#008800', color: 'white' }}
+                                    >
+                                        Speichern
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={deleteMidiFile}
                                         disabled={loading || !midiData?.hash}
-                                        style={{ backgroundColor: '#ff4444', color: 'white' }}
+                                        style={{ backgroundColor: '#ff4444', color: 'white', marginLeft: 16 }}
                                     >
                                         Löschen
                                     </button>
