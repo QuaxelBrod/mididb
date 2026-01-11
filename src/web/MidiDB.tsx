@@ -214,6 +214,41 @@ const MidiDB: React.FC = () => {
         setTimeout(() => setHighlightState(null), 1000);
     };
 
+    const deleteMidiFile = async () => {
+        if (!midiData || !midiData.hash) return;
+        if (!confirm('Möchten Sie diese Datei wirklich löschen?')) return;
+
+        setLoading(true);
+        try {
+            if (window.__USE__NODE__ === true) {
+                const basePath = window.__BASE_PATH__ || '';
+                const apiUrl = (basePath ? basePath : '') + '/midi/deleteMidiFile';
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hash: midiData.hash })
+                });
+
+                if (!response.ok) throw new Error('Delete failed');
+
+                // Reset view
+                setMidiData(null);
+                setRawMidiInformationData(null);
+                setredactedData(null);
+                setMusicLLM(null);
+                setMusicbrainz(null);
+                alert('Datei gelöscht');
+            } else {
+                alert('Delete not implemented for Electron yet');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Fehler beim Löschen');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const scanMidiDir = async () => {
         const electronApi = (window as any).electron as typeof window.electron | undefined;
         if (!electronApi?.scanMidiDir) {
@@ -782,6 +817,14 @@ const MidiDB: React.FC = () => {
                                     style={{ marginBottom: 16 }}
                                 >
                                     Speichern
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={deleteMidiFile}
+                                    disabled={loading || !midiData?.hash}
+                                    style={{ marginBottom: 16, backgroundColor: '#ff4444', color: 'white' }}
+                                >
+                                    Löschen
                                 </button>
                                 <label>
                                     Title:

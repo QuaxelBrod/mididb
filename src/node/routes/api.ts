@@ -1,6 +1,6 @@
 import express from 'express';
 import { load_brainz_for_midi_file, validationStateMidiFile, load_llm_for_midi_file, get_midi_from_db, parse_midi_file } from '../../common';
-import { getDbEntryForHash, saveMidiDocument, searchMidiDocuments, getTotalMidiCount } from '../../electron/mongo/mongo';
+import { getDbEntryForHash, saveMidiDocument, searchMidiDocuments, getTotalMidiCount, deleteMidiDocument } from '../../electron/mongo/mongo';
 import { IDBMidiDocument } from '../../electron/mongo/global';
 
 const router = express.Router();
@@ -197,6 +197,24 @@ router.post('/importFromUrl', async (req, res) => {
     } catch (err: any) {
         console.error('Error importing from URL:', err);
         return res.status(500).json({ error: err.message || 'Internal Server Error' });
+    }
+});
+
+// POST /midi/deleteMidiFile
+router.post('/deleteMidiFile', async (req, res) => {
+    try {
+        const { hash } = req.body;
+        if (!hash) {
+            return res.status(400).json({ error: 'Hash is required' });
+        }
+        const success = await deleteMidiDocument(hash);
+        if (!success) {
+            return res.status(404).json({ error: 'Document not found or could not be deleted' });
+        }
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('Fehler beim Löschen der Datei:', err);
+        return res.status(500).json({ error: 'Fehler beim Löschen der Datei' });
     }
 });
 

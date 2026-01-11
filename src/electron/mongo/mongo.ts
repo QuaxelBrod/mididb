@@ -266,3 +266,11 @@ export async function getTotalMidiCount(): Promise<number> {
     }
     return await collection.countDocuments({});
 }
+
+export async function deleteMidiDocument(hash: string): Promise<boolean> {
+    if (!client || !collection) {
+        throw new Error("MongoDB client or collection not initialized. Please call initMongo first.");
+    }
+    const result = await collection.deleteOne({ "midifile.hash": hash });
+    return result.deletedCount === 1;
+}
