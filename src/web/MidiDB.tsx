@@ -614,7 +614,7 @@ const MidiDB: React.FC = () => {
                                                 <button
                                                     onClick={() => {
                                                         if (musicLLM.text) {
-                                                            navigator.clipboard.writeText(musicLLM.text);
+                                                            handleredactedChange('text', musicLLM.text);
                                                         }
                                                     }}
                                                     style={{ marginLeft: 8 }}
@@ -627,7 +627,7 @@ const MidiDB: React.FC = () => {
                                                 <button
                                                     onClick={() => {
                                                         if (musicLLM.artist) {
-                                                            navigator.clipboard.writeText(musicLLM.artist);
+                                                            handleredactedChange('artist', musicLLM.artist);
                                                         }
                                                     }}
                                                     style={{ marginLeft: 8 }}
@@ -640,7 +640,7 @@ const MidiDB: React.FC = () => {
                                                 <button
                                                     onClick={() => {
                                                         if (musicLLM.title) {
-                                                            navigator.clipboard.writeText(musicLLM.title);
+                                                            handleredactedChange('title', musicLLM.title);
                                                         }
                                                     }}
                                                     style={{ marginLeft: 8 }}
@@ -653,7 +653,7 @@ const MidiDB: React.FC = () => {
                                                 <button
                                                     onClick={() => {
                                                         if (musicLLM.release) {
-                                                            navigator.clipboard.writeText(musicLLM.release);
+                                                            handleredactedChange('release', musicLLM.release);
                                                         }
                                                     }}
                                                     style={{ marginLeft: 8 }}
@@ -666,7 +666,7 @@ const MidiDB: React.FC = () => {
                                                 <button
                                                     onClick={() => {
                                                         if (musicLLM.album) {
-                                                            navigator.clipboard.writeText(musicLLM.album);
+                                                            handleredactedChange('album', musicLLM.album);
                                                         }
                                                     }}
                                                     style={{ marginLeft: 8 }}
@@ -700,7 +700,7 @@ const MidiDB: React.FC = () => {
                                                     <button
                                                         onClick={() => {
                                                             if (item.artist) {
-                                                                navigator.clipboard.writeText(item.artist);
+                                                                handleredactedChange('artist', item.artist);
                                                             }
                                                         }}
                                                         style={{ marginLeft: 8 }}
@@ -713,7 +713,7 @@ const MidiDB: React.FC = () => {
                                                     <button
                                                         onClick={() => {
                                                             if (item.title) {
-                                                                navigator.clipboard.writeText(item.title);
+                                                                handleredactedChange('title', item.title);
                                                             }
                                                         }}
                                                         style={{ marginLeft: 8 }}
@@ -726,7 +726,7 @@ const MidiDB: React.FC = () => {
                                                     <button
                                                         onClick={() => {
                                                             if (item.firstReleaseDate) {
-                                                                navigator.clipboard.writeText(item.firstReleaseDate);
+                                                                handleredactedChange('release', item.firstReleaseDate);
                                                             }
                                                         }}
                                                         style={{ marginLeft: 8 }}
@@ -739,7 +739,7 @@ const MidiDB: React.FC = () => {
                                                     <button
                                                         onClick={() => {
                                                             if (item.album) {
-                                                                navigator.clipboard.writeText(item.album);
+                                                                handleredactedChange('album', item.album);
                                                             }
                                                         }}
                                                         style={{ marginLeft: 8 }}
@@ -796,7 +796,7 @@ const MidiDB: React.FC = () => {
                                                     <button
                                                         onClick={() => {
                                                             if (musicbrainz.oldest && musicbrainz.oldest.artist) {
-                                                                navigator.clipboard.writeText(musicbrainz.oldest.artist);
+                                                                handleredactedChange('artist', musicbrainz.oldest.artist);
                                                             }
                                                         }}
                                                         style={{ marginLeft: 8 }}
@@ -809,7 +809,7 @@ const MidiDB: React.FC = () => {
                                                     <button
                                                         onClick={() => {
                                                             if (musicbrainz.oldest && musicbrainz.oldest.title) {
-                                                                navigator.clipboard.writeText(musicbrainz.oldest.title);
+                                                                handleredactedChange('title', musicbrainz.oldest.title);
                                                             }
                                                         }}
                                                         style={{ marginLeft: 8 }}
@@ -822,7 +822,7 @@ const MidiDB: React.FC = () => {
                                                     <button
                                                         onClick={() => {
                                                             if (musicbrainz.oldest && musicbrainz.oldest.firstReleaseDate) {
-                                                                navigator.clipboard.writeText(musicbrainz.oldest.firstReleaseDate);
+                                                                handleredactedChange('release', musicbrainz.oldest.firstReleaseDate);
                                                             }
                                                         }}
                                                         style={{ marginLeft: 8 }}
@@ -835,7 +835,7 @@ const MidiDB: React.FC = () => {
                                                     <button
                                                         onClick={() => {
                                                             if (musicbrainz.oldest && musicbrainz.oldest.album) {
-                                                                navigator.clipboard.writeText(musicbrainz.oldest.album);
+                                                                handleredactedChange('album', musicbrainz.oldest.album);
                                                             }
                                                         }}
                                                         style={{ marginLeft: 8 }}
