@@ -1,5 +1,5 @@
 
-import {Ollama} from 'ollama'
+import { Ollama } from 'ollama'
 
 
 const system_prompt = `You are a music expert.
@@ -93,10 +93,9 @@ function extractJSON(text: string) {
     return null;
 }
 
-//let MODEL = "llama3.1:8b";
-let MODEL = "llama3.2:3b";
-//let MODEL = "gemma3:12b";
-//let MODEL = "gemma3:1b";
+// Konfiguration über Environment Variablen (Docker Compose)
+let MODEL = process.env.OLLAMA_MODEL || "llama3.2:3b";
+// Fallback/Legacy Kommentare entfernt, da jetzt konfigurierbar
 
 class MusicLLM {
     private ollama: any;
@@ -127,7 +126,7 @@ class MusicLLM {
 
     }
 
-    async init():Promise<boolean> {
+    async init(): Promise<boolean> {
         try {
             this.ollama = new Ollama({
                 host: this.host
@@ -147,49 +146,49 @@ class MusicLLM {
      * @param {string} message - The message containing the song information.
      * @returns {Promise<IMusicLLM_softsearch_result>} - The result of the soft search.
      */
-    async soft_search(message: string): Promise < IMusicLLM_softsearch_result | null > {
-            let chat_result: any = null;
-            try {
-                if (!this.inititialized) {
-                    if (!await this.init()) {
-                        console.error("Ollama not initialized");
-                        return null;
-                    }
-                }
-                chat_result = await this.ollama.chat({
-                    model: this.model,
-                    messages: [
-                        {
-                            role: "system",
-                            content: system_prompt
-                        },
-                        {
-                            role: "user",
-                            content: message
-                        }
-                    ],
-                    stream: false,
-                    options: {
-                        temperature: 0.1
-                    }
-                });
-
-                if(chat_result?.message?.content) {
-                    let result: IMusicLLM_softsearch_result = extractJSON(chat_result?.message?.content);
-                    return result;
-                }
-            else {
-                    console.error("No content in chat result");
+    async soft_search(message: string): Promise<IMusicLLM_softsearch_result | null> {
+        let chat_result: any = null;
+        try {
+            if (!this.inititialized) {
+                if (!await this.init()) {
+                    console.error("Ollama not initialized");
                     return null;
                 }
             }
-        catch(error) {
-                console.log("Error parsing chat result:\n", chat_result?.message?.content);
-                console.error("Error parsing JSON:", error);
+            chat_result = await this.ollama.chat({
+                model: this.model,
+                messages: [
+                    {
+                        role: "system",
+                        content: system_prompt
+                    },
+                    {
+                        role: "user",
+                        content: message
+                    }
+                ],
+                stream: false,
+                options: {
+                    temperature: 0.1
+                }
+            });
+
+            if (chat_result?.message?.content) {
+                let result: IMusicLLM_softsearch_result = extractJSON(chat_result?.message?.content);
+                return result;
+            }
+            else {
+                console.error("No content in chat result");
                 return null;
             }
         }
+        catch (error) {
+            console.log("Error parsing chat result:\n", chat_result?.message?.content);
+            console.error("Error parsing JSON:", error);
+            return null;
+        }
     }
+}
 //
 let MusicLLMinstance = new MusicLLM();
 export default MusicLLMinstance;
