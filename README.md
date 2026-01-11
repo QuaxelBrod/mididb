@@ -174,6 +174,30 @@ Der Server bietet einen Endpunkt für automatisierte Importe (z.B. via n8n, Redd
 - Merge-Logik: Wählt pro Content-Hash den “reichsten” Datensatz (reviewed/redacted/musicbrainz/musicLLM) als Primär, sammelt alle `fileName`-Einträge, füllt fehlende Felder aus MusicLLM/Redacted/MusicBrainz auf, setzt `validationState` auf reviewed wenn vorhanden, aktualisiert Primär und löscht die übrigen Duplikate.
 
 
+## Hilfs-Skripte
+
+Im Ordner `scripts/` befinden sich Shell-Wrapper für häufige Aufgaben. Diese können konfiguriert werden, indem Umgebungsvariablen (`MONGO_URL`, `MONGO_DB_NAME`, `MONGO_DB_COLLECTION`) gesetzt werden.
+
+### 1. `import_pattern.sh`
+Wrapper für das Massen-Import-Tool.
+```bash
+# Einfacher Import
+bash scripts/import_pattern.sh /pfad/zu/dateien
+
+# Import mit Style-Tag
+bash scripts/import_pattern.sh /pfad/zu/dateien "GenreName"
+```
+
+### 2. `dedupe_content.sh`
+Tool zum Finden und Zusammenführen von Duplikaten (basierend auf musikalischem Inhalt).
+```bash
+# Nur analysieren (Dry Run)
+bash scripts/dedupe_content.sh
+
+# Zusammenführen (Merge) & Duplikate löschen
+bash scripts/dedupe_content.sh --merge
+```
+
 ## Docker
 
 Einfach das Dockerfile starten. 

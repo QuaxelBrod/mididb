@@ -34,4 +34,4 @@ echo "Using MONGO_DB_NAME=${MONGO_DB_NAME}"
 echo "Using MONGO_DB_COLLECTION=${MONGO_DB_COLLECTION}"
 echo "Importing from: ${IMPORT_DIR}"
 
-npm run import:pattern -- "${IMPORT_DIR}"
+npm run import:pattern -- "$@"

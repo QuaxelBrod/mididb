@@ -55,7 +55,12 @@ router.post('/openMidiFile', express.raw({ type: 'application/octet-stream', lim
 router.post('/saveMidiFile', async (req, res) => {
     const buffer: IMidiFileInformation = req.body;
     try {
-        if (buffer && buffer.midifile && buffer.midifile.data) {
+        if (!buffer || !buffer.midifile) {
+            console.error('saveMidiFile: Invalid body', req.body);
+            return res.status(400).json({ error: 'Invalid MIDI data structure' });
+        }
+
+        if (buffer.midifile.data) {
             // Zuerst den Base64-String in einen Buffer umwandeln
             const nodeBuffer = Buffer.from(buffer.midifile.data as string, 'base64');
 

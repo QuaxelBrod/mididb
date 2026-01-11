@@ -38,7 +38,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(express.json()); // <-- JSON-Parser
+app.use(express.json({ limit: '50mb' })); // <-- JSON-Parser
 app.use(express.urlencoded({ extended: true })); // <-- URL-Parameter-Parser
 
 app.get('/healthcheck', (_req, res) => {
