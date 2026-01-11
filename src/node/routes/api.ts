@@ -232,7 +232,7 @@ router.get('/count', async (req, res) => {
 // POST /midi/enrich/llm
 router.post('/enrich/llm', async (req, res) => {
     try {
-        const { hash } = req.body;
+        const { hash, prompt } = req.body;
         if (!hash) return res.status(400).json({ error: 'Hash is required' });
 
         let doc = await getDbEntryForHash(hash);
@@ -243,7 +243,7 @@ router.post('/enrich/llm', async (req, res) => {
         // We cast it back and forth as needed, or just pass the doc if it matches sufficiently.
         let info = doc as unknown as IMidiFileInformation;
 
-        info = await load_llm_for_midi_file(info) as IMidiFileInformation;
+        info = await load_llm_for_midi_file(info, prompt) as IMidiFileInformation;
 
         if (info.musicLLM) {
             // Save updated doc

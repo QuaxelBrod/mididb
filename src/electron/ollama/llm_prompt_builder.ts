@@ -5,7 +5,7 @@ import instrumentsData from './instruments';
 
 const instrumentList = instrumentsData.split('\n').map(line => line.trim().toLowerCase());
 
-export function getLLMUserPrompt(midifile: ILoadMidiFile): string {
+export function getLLMUserPrompt(midifile: ILoadMidiFile, additionalPrompt: string = ""): string {
     let prompt = "Wich song you would choose with this information:\n";
     if (midifile.fileName != null) {
         prompt += `Song has this file names: ${midifile.fileName.join(", ")}\n`;
@@ -27,5 +27,8 @@ export function getLLMUserPrompt(midifile: ILoadMidiFile): string {
     }
     const regex = /[\w.-]+@[\w.-]+\.[A-Z|a-z]{2,}/g; // Regulärer Ausdruck für E-Mail-Adressen
     prompt = prompt.replace(regex, '');
+    if (additionalPrompt) {
+        prompt += `\nAdditional user instructions:\n${additionalPrompt}\n`;
+    }
     return prompt;
 }

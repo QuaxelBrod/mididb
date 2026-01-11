@@ -10,12 +10,12 @@ import { SearchMidiDocumentsResult } from './web/MidiSearch';
 
 
 
-async function parseWithOLLAMA(midiFile: ILoadMidiFile): Promise<IMusicLLM_softsearch_result | null> {
+async function parseWithOLLAMA(midiFile: ILoadMidiFile, additionalPrompt: string = ""): Promise<IMusicLLM_softsearch_result | null> {
     // check data with ollama
     let musicllm = null;
     if (midiFile) {
         //const start = Date.now();
-        musicllm = await MusicLLMinstance.soft_search(getLLMUserPrompt(midiFile));
+        musicllm = await MusicLLMinstance.soft_search(getLLMUserPrompt(midiFile, additionalPrompt));
         //const duration = Date.now() - start;
         //console.log(`MusicLLMinstance.soft_search Dauer: ${duration} ms`);
         // musicllm = await MusicLLMinstance.soft_search(getLLMUserPrompt(midifile.toJSON()));
@@ -66,7 +66,7 @@ export function validationStateMidiFile(midiFileInformation: IMidiFileInformatio
 }
 
 
-export async function get_midi_file_by_hash (hash: string): Promise<IMidiFileInformation | null> {
+export async function get_midi_file_by_hash(hash: string): Promise<IMidiFileInformation | null> {
     //console.log('get-midi-file-by-hash:', hash);
     let db_document: IDBMidiDocument | null = await getDbEntryForHash(hash);
     if (db_document) {
@@ -166,10 +166,10 @@ export async function get_midi_from_db(midi_info: IMidiFileInformation | null): 
     return null;
 }
 
-export async function load_llm_for_midi_file(midi_info: IMidiFileInformation | null): Promise<IMidiFileInformation | null> {
+export async function load_llm_for_midi_file(midi_info: IMidiFileInformation | null, additionalPrompt: string = ""): Promise<IMidiFileInformation | null> {
     try {
         if (midi_info && midi_info.midifile) {
-            midi_info.musicLLM = await parseWithOLLAMA(midi_info.midifile);
+            midi_info.musicLLM = await parseWithOLLAMA(midi_info.midifile, additionalPrompt);
         }
         return midi_info;
     }

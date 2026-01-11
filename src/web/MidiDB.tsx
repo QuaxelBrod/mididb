@@ -25,6 +25,7 @@ const MidiDB: React.FC = () => {
     const [redactedData, setredactedData] = useState<IMidiFileRedacted | null>(null);
     const [highlightState, setHighlightState] = useState<'success' | 'error' | null>(null);
     const [totalMidiFiles, setTotalMidiFiles] = useState<number | null>(null);
+    const [llmAdditionalPrompt, setLlmAdditionalPrompt] = useState<string>('');
 
     // Für Suchergebnis-Auswahl
     const [searchResult, setSearchResult] = useState<any>(null);
@@ -259,7 +260,7 @@ const MidiDB: React.FC = () => {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ hash: midiData.hash })
+                    body: JSON.stringify({ hash: midiData.hash, prompt: llmAdditionalPrompt })
                 });
                 const data = await response.json();
                 if (data.success && data.musicLLM) {
@@ -589,6 +590,18 @@ const MidiDB: React.FC = () => {
                                 )}
                                 {!musicLLM && midiData && (
                                     <div style={{ marginBottom: 24 }}>
+                                        <div style={{ marginBottom: 8 }}>
+                                            <label style={{ display: 'block', marginBottom: 4 }}>
+                                                Zusätzliche Anweisungen für das LLM:
+                                            </label>
+                                            <textarea
+                                                value={llmAdditionalPrompt}
+                                                onChange={(e) => setLlmAdditionalPrompt(e.target.value)}
+                                                rows={3}
+                                                style={{ width: '100%', marginBottom: 8 }}
+                                                placeholder="z.B. 'Fokussiere dich auf den deutschen Schlager Kontext' oder 'Antworte immer mit einem leeren JSON wenn unsicher'"
+                                            />
+                                        </div>
                                         <button onClick={fetchLLM}>Hole Infos vom LLM</button>
                                     </div>
                                 )}
