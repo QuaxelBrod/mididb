@@ -818,14 +818,7 @@ const MidiDB: React.FC = () => {
                                 >
                                     Speichern
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={deleteMidiFile}
-                                    disabled={loading || !midiData?.hash}
-                                    style={{ marginBottom: 16, backgroundColor: '#ff4444', color: 'white' }}
-                                >
-                                    Löschen
-                                </button>
+
                                 <label>
                                     Title:
                                     <input
@@ -932,6 +925,16 @@ const MidiDB: React.FC = () => {
                                         onChange={e => handleredactedChange('signature', e.target.value)}
                                     />
                                 </label>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+                                    <button
+                                        type="button"
+                                        onClick={deleteMidiFile}
+                                        disabled={loading || !midiData?.hash}
+                                        style={{ backgroundColor: '#ff4444', color: 'white' }}
+                                    >
+                                        Löschen
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     </div>
