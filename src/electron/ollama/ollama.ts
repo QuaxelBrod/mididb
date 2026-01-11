@@ -113,11 +113,6 @@ class MusicLLM {
      * @param {number} port - The port number of the LLM server.
      */
     constructor(host = "localhost", port = 11434) {
-        if (process.env.OLLAMA_API_URL) {
-            const url = new URL(process.env.OLLAMA_API_URL);
-            host = url.hostname;
-            port = parseInt(url.port);
-        }
         this.host = host;
         this.port = port;
         // Assign model before usage
@@ -190,7 +185,15 @@ class MusicLLM {
     }
 }
 //
-let MusicLLMinstance = new MusicLLM();
+let host = "127.0.0.1";
+let port = 11434;
+if (process.env.OLLAMA_API_URL) {
+    const url = new URL(process.env.OLLAMA_API_URL);
+    host = url.hostname;
+    port = parseInt(url.port);
+}
+console.log("Ollama using host:", host, "port:", port);
+let MusicLLMinstance = new MusicLLM(host, port);
 export default MusicLLMinstance;
 
 // (async () => {
