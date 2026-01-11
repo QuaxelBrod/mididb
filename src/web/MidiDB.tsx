@@ -249,6 +249,64 @@ const MidiDB: React.FC = () => {
         }
     };
 
+    const fetchLLM = async () => {
+        if (!midiData || !midiData.hash) return;
+        setLoading(true);
+        try {
+            if (window.__USE__NODE__ === true) {
+                const basePath = window.__BASE_PATH__ || '';
+                const apiUrl = (basePath ? basePath : '') + '/midi/enrich/llm';
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hash: midiData.hash })
+                });
+                const data = await response.json();
+                if (data.success && data.musicLLM) {
+                    setMusicLLM(data.musicLLM);
+                } else {
+                    alert('Fehler: ' + (data.message || 'Unbekannter Fehler'));
+                }
+            } else {
+                alert('Not implemented in Electron direct mode');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Fehler beim Abrufen vom LLM');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchMusicBrainz = async () => {
+        if (!midiData || !midiData.hash) return;
+        setLoading(true);
+        try {
+            if (window.__USE__NODE__ === true) {
+                const basePath = window.__BASE_PATH__ || '';
+                const apiUrl = (basePath ? basePath : '') + '/midi/enrich/musicbrainz';
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hash: midiData.hash })
+                });
+                const data = await response.json();
+                if (data.success && data.musicbrainz) {
+                    setMusicbrainz(data.musicbrainz);
+                } else {
+                    alert('Fehler: ' + (data.message || 'Unbekannter Fehler'));
+                }
+            } else {
+                alert('Not implemented in Electron direct mode');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Fehler beim Abrufen von MusicBrainz');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const scanMidiDir = async () => {
         const electronApi = (window as any).electron as typeof window.electron | undefined;
         if (!electronApi?.scanMidiDir) {
@@ -529,6 +587,11 @@ const MidiDB: React.FC = () => {
                                         {/* <button onClick={saveMidiFile} style={{ marginTop: 16 }}>Speichern</button> */}
                                     </div>
                                 )}
+                                {!musicLLM && midiData && (
+                                    <div style={{ marginBottom: 24 }}>
+                                        <button onClick={fetchLLM}>Hole Infos vom LLM</button>
+                                    </div>
+                                )}
                                 {musicLLM && (
                                     <div className="music-llm-section" style={{ marginBottom: 24 }}>
                                         <h2>Music LLM Result</h2>
@@ -607,6 +670,11 @@ const MidiDB: React.FC = () => {
                                             MusicLLM löschen
                                         </button>
 
+                                    </div>
+                                )}
+                                {!musicbrainz && midiData && (
+                                    <div style={{ marginBottom: 24 }}>
+                                        <button onClick={fetchMusicBrainz}>Hole Infos von MusicBrainz</button>
                                     </div>
                                 )}
                                 {musicbrainz && (

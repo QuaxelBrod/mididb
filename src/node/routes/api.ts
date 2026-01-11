@@ -229,4 +229,61 @@ router.get('/count', async (req, res) => {
     }
 });
 
+// POST /midi/enrich/llm
+router.post('/enrich/llm', async (req, res) => {
+    try {
+        const { hash } = req.body;
+        if (!hash) return res.status(400).json({ error: 'Hash is required' });
+
+        let doc = await getDbEntryForHash(hash);
+        if (!doc) return res.status(404).json({ error: 'Document not found' });
+
+        // Convert db doc (IDBMidiDocument) to IMidiFileInformation-like structure for the helper
+        // The helper expects IMidiFileInformation. load_llm_for_midi_file modifies it in place and returns it.
+        // We cast it back and forth as needed, or just pass the doc if it matches sufficiently.
+        let info = doc as unknown as IMidiFileInformation;
+
+        info = await load_llm_for_midi_file(info) as IMidiFileInformation;
+
+        if (info.musicLLM) {
+            // Save updated doc
+            await saveMidiDocument(info as IDBMidiDocument);
+            return res.json({ success: true, musicLLM: info.musicLLM });
+        } else {
+            return res.json({ success: false, message: 'LLM returned no result' });
+        }
+
+    } catch (err) {
+        console.error('Error enriching LLM:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// POST /midi/enrich/musicbrainz
+router.post('/enrich/musicbrainz', async (req, res) => {
+    try {
+        const { hash } = req.body;
+        if (!hash) return res.status(400).json({ error: 'Hash is required' });
+
+        let doc = await getDbEntryForHash(hash);
+        if (!doc) return res.status(404).json({ error: 'Document not found' });
+
+        let info = doc as unknown as IMidiFileInformation;
+
+        // MusicBrainz lookup often depends on LLM results or existing metadata
+        info = await load_brainz_for_midi_file(info) as IMidiFileInformation;
+
+        if (info.musicbrainz) {
+            await saveMidiDocument(info as IDBMidiDocument);
+            return res.json({ success: true, musicbrainz: info.musicbrainz });
+        } else {
+            return res.json({ success: false, message: 'MusicBrainz returned no result' });
+        }
+
+    } catch (err) {
+        console.error('Error enriching MusicBrainz:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 export default router;
