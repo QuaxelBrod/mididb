@@ -258,5 +258,11 @@ export async function getDbEntryForHash(hash: string | null): Promise<IDBMidiDoc
     // Wenn du ein ArrayBuffer brauchst:
     result.midifile.data = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
     return result as unknown as IDBMidiDocument;
+}
 
+export async function getTotalMidiCount(): Promise<number> {
+    if (!client || !collection) {
+        throw new Error("MongoDB client or collection not initialized. Please call initMongo first.");
+    }
+    return await collection.countDocuments({});
 }

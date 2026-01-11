@@ -1,6 +1,6 @@
 import express from 'express';
 import { load_brainz_for_midi_file, validationStateMidiFile, load_llm_for_midi_file, get_midi_from_db, parse_midi_file } from '../../common';
-import { getDbEntryForHash, saveMidiDocument, searchMidiDocuments } from '../../electron/mongo/mongo';
+import { getDbEntryForHash, saveMidiDocument, searchMidiDocuments, getTotalMidiCount } from '../../electron/mongo/mongo';
 import { IDBMidiDocument } from '../../electron/mongo/global';
 
 const router = express.Router();
@@ -197,6 +197,17 @@ router.post('/importFromUrl', async (req, res) => {
     } catch (err: any) {
         console.error('Error importing from URL:', err);
         return res.status(500).json({ error: err.message || 'Internal Server Error' });
+    }
+});
+
+// GET /midi/count
+router.get('/count', async (req, res) => {
+    try {
+        const count = await getTotalMidiCount();
+        res.json({ count });
+    } catch (err) {
+        console.error('Fehler beim Abrufen der Anzahl:', err);
+        res.status(500).json({ error: 'Fehler beim Abrufen der Anzahl' });
     }
 });
 

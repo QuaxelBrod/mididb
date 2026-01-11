@@ -24,6 +24,7 @@ const MidiDB: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [redactedData, setredactedData] = useState<IMidiFileRedacted | null>(null);
     const [highlightState, setHighlightState] = useState<'success' | 'error' | null>(null);
+    const [totalMidiFiles, setTotalMidiFiles] = useState<number | null>(null);
 
     // Für Suchergebnis-Auswahl
     const [searchResult, setSearchResult] = useState<any>(null);
@@ -51,6 +52,15 @@ const MidiDB: React.FC = () => {
     useEffect(() => {
         const electronApi = (window as any).electron as typeof window.electron | undefined;
         setCanScanDir(!!electronApi?.scanMidiDir);
+
+        if (window.__USE__NODE__) {
+            const basePath = window.__BASE_PATH__ || '';
+            const apiUrl = (basePath ? basePath : '') + '/midi/count';
+            fetch(apiUrl)
+                .then(res => res.json())
+                .then(data => setTotalMidiFiles(data.count))
+                .catch(err => console.error('Failed to fetch count:', err));
+        }
     }, []);
 
     const openAndSendMidiFile = async (): Promise<IMidiFileInformation | null> => {
@@ -370,6 +380,9 @@ const MidiDB: React.FC = () => {
                 {canScanDir && (
                     <button onClick={scanMidiDir}>Scan dir</button>
                 )}
+                <div style={{ padding: '0 8px', fontSize: '12px', color: '#666' }}>
+                    Gesamt: {totalMidiFiles !== null ? totalMidiFiles : '...'}
+                </div>
                 <br />
                 <br />
                 <hr />
