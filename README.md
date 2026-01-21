@@ -147,22 +147,86 @@ Die Suche unterstützt nun verschiedene Modi:
 
 ---
 
-## Automatisierte Importe (n8n / API)
+## API Dokumentation
 
-Der Server bietet einen Endpunkt für automatisierte Importe (z.B. via n8n, Reddit-Crawler):
+Der Server läuft standardmäßig auf Port `3000`. Alle API-Endpunkte (außer Healthcheck und Test) befinden sich unter dem Präfix `/midi`.
 
-**Endpoint:** `POST /midi/importFromUrl`
-**Body:**
-```json
-{
-  "url": "https://example.com/song.mid",
-  "sourceMetadata": {
-    "title": "Reddit Post Title",
-    "postId": "t3_xyz123"
-  }
-}
-```
-**Funktion:** Lädt die Datei herunter, hasht sie, prüft Duplikate, reichert Daten via MusicBrainz an und speichert alles.
+### Allgemeine Endpunkte
+
+- **GET `/healthcheck`**
+  - Prüft, ob der Server läuft.
+  - Antwort: `{ "status": "ok" }`
+
+- **GET `/test`**
+  - Einfacher Verbindungstest.
+  - Antwort: `Test erfolgreich!`
+
+### MIDI Endpunkte
+
+- **GET `/midi/count`**
+  - Gibt die Gesamtanzahl der MIDI-Dokumente in der Datenbank zurück.
+  - Antwort: `{ "count": 1234 }`
+
+- **POST `/midi/openMidiFile`**
+  - Lädt eine MIDI-Datei hoch, analysiert sie und reichert sie mit ersten Daten an (DB-Abgleich, LLM, MusicBrainz).
+  - **Header:** `Content-Type: application/octet-stream`, `x-filename: <Dateiname>` (URL-codiert)
+  - **Body:** Binäre MIDI-Daten.
+  - Antwort: Vollständiges MIDI-Informationsobjekt (JSON).
+
+- **POST `/midi/saveMidiFile`**
+  - Speichert oder aktualisiert ein MIDI-Dokument in der Datenbank.
+  - **Body:** JSON-Objekt mit den MIDI-Informationen (Base64-Daten im Feld `midifile.data`).
+  - Antwort: `{ "success": true, "id": "..." }`
+
+- **POST `/midi/getMidiFileByHash`**
+  - Ruft ein MIDI-Dokument anhand seines SHA256-Hashes ab.
+  - **Body:** `{ "hash": "..." }`
+  - Antwort: MIDI-Informationsobjekt.
+
+- **POST `/midi/searchMidiDocuments`**
+  - Durchsucht die Datenbank nach MIDI-Dokumenten.
+  - **Body:**
+    ```json
+    {
+      "query": { "redacted.artist": "Queen" },
+      "skip": 0,
+      "limit": 50
+    }
+    ```
+  - Antwort: `{ "docs": [...], "total": 123 }`
+
+- **POST `/midi/deleteMidiFile`**
+  - Löscht ein MIDI-Dokument anhand seines Hashes.
+  - **Body:** `{ "hash": "..." }`
+  - Antwort: `{ "success": true }`
+
+- **POST `/midi/importFromUrl`**
+  - Lädt eine MIDI-Datei von einer URL herunter und importiert sie.
+  - **Body:**
+    ```json
+    {
+      "url": "https://example.com/song.mid",
+      "sourceMetadata": {
+        "title": "Reddit Post Title",
+        "artist": "Artist Name",
+        "postId": "t3_xyz123"
+      }
+    }
+    ```
+  - **Funktion:** Die `sourceMetadata` wird genutzt, um das LLM-Enrichment zu verbessern und (falls in der Datei nicht vorhanden) die redaktionellen Felder `title` und `artist` vorzubefüllen.
+  - Antwort: `{ "success": true, "status": "imported|skipped", "id": "...", "hash": "..." }`
+
+### Enrichment Endpunkte
+
+- **POST `/midi/enrich/llm`**
+  - Startet eine erneute Anreicherung durch das LLM für ein bestehendes Dokument.
+  - **Body:** `{ "hash": "...", "prompt": "Optionaler Custom Prompt" }`
+  - Antwort: `{ "success": true, "musicLLM": {...} }`
+
+- **POST `/midi/enrich/musicbrainz`**
+  - Startet eine erneute Recherche in MusicBrainz für ein bestehendes Dokument.
+  - **Body:** `{ "hash": "..." }`
+  - Antwort: `{ "success": true, "musicbrainz": {...} }`
 ## Dedupe-Tool für MIDI-Inhalte (Text ignorieren)
 
 - Script: `npm run dedupe:content` – berechnet Content-Hashes, die Text-Metaevents ignorieren.

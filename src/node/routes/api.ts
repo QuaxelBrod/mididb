@@ -165,7 +165,13 @@ router.post('/importFromUrl', async (req, res) => {
         }
 
         // 4. Enrich & Save
-        midi_file = await load_llm_for_midi_file(midi_file);
+        let additionalPrompt = '';
+        if (sourceMetadata) {
+            if (sourceMetadata.title) additionalPrompt += `Source Title: ${sourceMetadata.title}\n`;
+            if (sourceMetadata.artist) additionalPrompt += `Source Artist: ${sourceMetadata.artist}\n`;
+        }
+
+        midi_file = await load_llm_for_midi_file(midi_file, additionalPrompt);
         midi_file = await load_brainz_for_midi_file(midi_file);
         if (midi_file) {
             midi_file = validationStateMidiFile(midi_file);
@@ -178,9 +184,11 @@ router.post('/importFromUrl', async (req, res) => {
                 if (!midi_file.redacted.title && sourceMetadata.title) {
                     midi_file.redacted.title = sourceMetadata.title;
                 }
+                // If we have an artist from source, use it
+                if (!midi_file.redacted.artist && sourceMetadata.artist) {
+                    midi_file.redacted.artist = sourceMetadata.artist;
+                }
                 // Store original source info in redacted.tags or a new field?
-                // Let's verify if we can extend the schema or put it in tags.
-                // For now, put it in tags
                 if (!midi_file.redacted.tags) midi_file.redacted.tags = [];
                 midi_file.redacted.tags.push({ name: `source:${url}` });
                 if (sourceMetadata.postId) {

@@ -1,0 +1,424 @@
+{
+  "name": "Reddit MIDI Import (with Email Notification)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "0bc38067-5382-4f01-bdf8-850fb2804226",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/BitMidi/new.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a237b0bc-7dd0-4f2f-9635-b7db97d69f2f",
+      "name": "Fetch Reddit New",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        208,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.178.29:8011/midi/importFromUrl",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $json.url }}\",\n  \"sourceMetadata\": {\n    \"title\": \"{{ $('Loop Over Items').item.json.title }}\",\n    \"artist\": \"{{ $('Loop Over Items').item.json.text }}\",\n    \"postId\": \"{{ $('Loop Over Items').item.json.id }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "e09da8c8-0cb9-4884-bc44-356c2ff1ce29",
+      "name": "Import to MIDI DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1328,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\n// Reddit returns an array where the first element is the listing\nconst redditData = Array.isArray(response) ? response[0] : response;\nconst children = redditData.data.children;\n\nreturn children.map(child => {\n  const d = child.data;\n  return {\n    title: d.title ? d.title.replace(\"MIDI file – \",\"\") : \"\",\n    text: d.selftext,\n    redditUrl: d.url,\n    id: d.name,\n    isSelf: d.is_self,\n    isBitMidi: d.url.includes('bitmidi.com') && !d.url.toLowerCase().endsWith('.mid')\n  };\n}).filter(item => !item.isSelf);"
+      },
+      "id": "698d5645-3ccb-47dd-a469-adec16e6fd8e",
+      "name": "Extract & Filter MIDI Links",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        576,
+        0
+      ],
+      "id": "0f8f777e-7e38-42fc-815b-bef322f18b5c",
+      "name": "Loop Over Items",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isBitMidi }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "64c813a2-617a-4ad5-a55f-20bee3f6ac96",
+      "name": "Is BitMidi Page?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        864,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Extract & Filter MIDI Links').item.json.redditUrl }}",
+        "options": {}
+      },
+      "id": "02789424-1b68-43b6-bf79-f938772ba5dc",
+      "name": "Fetch BitMidi HTML",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1040,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const html = $input.first().json.data || \"\";\n// Using the user-provided pattern: \\\"downloadUrl\\\":\\\"/uploads/73058.mid\\\"\nconst match = html.match(/\\\"downloadUrl\\\":\\\"(\\/uploads\\/[0-9]+\\.mid)\\\"/);\nreturn { \n  url: match ? 'https://bitmidi.com' + match[1] : null\n};"
+      },
+      "id": "23e4fed3-4914-4840-b8a7-183b46a41f04",
+      "name": "Extract Download Link",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "7bbf59ff-a7f3-4b1a-8810-dba8c92f7dfd",
+      "name": "Merge Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        832,
+        416
+      ],
+      "id": "23671de0-0930-4ee0-8cf0-f08ce9152534",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Beispiel für Logik im Code-Knoten (nur zur Erklärung)\nconst allResults = $input.first().json.data;\n// Filtere nur die erfolgreichen und extrahiere die Titel\nconst successTitles = allResults\n  .filter(item => item.status === 'imported')\n  .map(item => [\n    \"Dateiname | \",\n    item.title,\n    \" | Infos | \",\n    item.text,\n    \" | hash | \",\n    item.hash\n  ].join(''));\n// Erstelle einen langen String mit Zeilenumbrüchen\nreturn {\n  sendEmail: successTitles.length > 0,\n  emailBody: \"---|---|---|---|---|---\\n\" + successTitles.join('\\n')\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        416
+      ],
+      "id": "77ae2961-1ce7-4f2d-9963-8dd27c4de5bf",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  \"title\": $('Loop Over Items').first().json.title,\n  \"text\": $('Loop Over Items').first().json.text,\n  \"hash\": $input.first().json.hash,\n  \"status\": $input.first().json.status\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        0
+      ],
+      "id": "d7ca6a44-a26f-4106-bf7a-01fefe060446",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "fromEmail": "AlterEgo - MIDI Importer",
+        "toEmail": "j.copenhaguen.bormuth@gmail.com",
+        "subject": "Neue Midi Importiert",
+        "emailFormat": "text",
+        "text": "=Folgende Files wurden importiert;\n\n{{ $('Code in JavaScript').item.json.emailBody }}\n\nBis demnächst.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1408,
+        416
+      ],
+      "id": "5ee4400a-422d-4f27-a7c0-4d9b91c29482",
+      "name": "Send email",
+      "webhookId": "bd151853-d78d-43b8-af66-59e01a57872e",
+      "credentials": {
+        "smtp": {
+          "id": "LmRXCXtLNzYeMLlq",
+          "name": "AlterEgo Email Send"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a2dbe489-5e35-47d7-b9b9-d72f9c1d11f9",
+              "leftValue": "={{ $json.sendEmail }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1184,
+        416
+      ],
+      "id": "1ae9fcff-ccf2-402e-8f25-9dd5967d3c82",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Reddit New",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Reddit New": {
+      "main": [
+        [
+          {
+            "node": "Extract & Filter MIDI Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract & Filter MIDI Links": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Is BitMidi Page?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Import to MIDI DB": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is BitMidi Page?": {
+      "main": [
+        [
+          {
+            "node": "Fetch BitMidi HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fetch BitMidi HTML": {
+      "main": [
+        [
+          {
+            "node": "Extract Download Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Download Link": {
+      "main": [
+        [
+          {
+            "node": "Import to MIDI DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Paths": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "74dc9b08-36d9-4d1d-8238-0cc10785fa39",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1f3d386b42112bdebef47f02cdc0123fa3c0bf7db4760cbaa76b2814e87bd263"
+  },
+  "id": "2zrg94Ai3G0fp_be7UDX1",
+  "tags": []
+}

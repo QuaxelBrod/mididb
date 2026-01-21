@@ -1,0 +1,420 @@
+{
+    "name": "Reddit MIDI Import (Optimized)",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "hours",
+                            "hoursInterval": 6
+                        }
+                    ]
+                }
+            },
+            "id": "0bc38067-5382-4f01-bdf8-850fb2804226",
+            "name": "Schedule Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                0,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://www.reddit.com/r/BitMidi/new.json",
+                "sendQuery": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "value": "10"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "a237b0bc-7dd0-4f2f-9635-b7db97d69f2f",
+            "name": "Fetch Reddit New",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                200,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const response = $input.first().json;\nconst redditData = Array.isArray(response) ? response[0] : response;\nconst children = redditData.data.children || [];\n\nreturn children.map(child => {\n  const d = child.data;\n  return {\n    title: d.title ? d.title.replace(\"MIDI file – \",\"\").trim() : \"Unknown\",\n    text: d.selftext || \"\",\n    redditUrl: d.url,\n    id: d.name,\n    isSelf: d.is_self,\n    isBitMidi: d.url.includes('bitmidi.com') && !d.url.toLowerCase().endsWith('.mid')\n  };\n}).filter(item => !item.isSelf);"
+            },
+            "id": "698d5645-3ccb-47dd-a469-adec16e6fd8e",
+            "name": "Extract & Filter MIDI Links",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 1,
+            "position": [
+                400,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "options": {
+                    "reset": false
+                }
+            },
+            "id": "0f8f777e-7e38-42fc-815b-bef322f18b5c",
+            "name": "Loop Over Items",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                600,
+                0
+            ],
+            "alwaysOutputData": true
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "boolean": [
+                        {
+                            "value1": "={{ $json.isBitMidi }}",
+                            "value2": true
+                        }
+                    ]
+                }
+            },
+            "id": "64c813a2-617a-4ad5-a55f-20bee3f6ac96",
+            "name": "Is BitMidi Page?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                800,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "url": "={{ $json.redditUrl }}",
+                "options": {}
+            },
+            "id": "02789424-1b68-43b6-bf79-f938772ba5dc",
+            "name": "Fetch BitMidi HTML",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1000,
+                -100
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const html = $input.first().json.data || \"\";\nconst match = html.match(/\\\"downloadUrl\\\":\\\"(\\/uploads\\/[0-9]+\\.mid)\\\"/);\nreturn { \n  url: match ? 'https://bitmidi.com' + match[1] : null\n};"
+            },
+            "id": "23e4fed3-4914-4840-b8a7-183b46a41f04",
+            "name": "Extract Download Link",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 1,
+            "position": [
+                1200,
+                -100
+            ]
+        },
+        {
+            "parameters": {
+                "mode": "combine",
+                "combinationMode": "mergeByPosition"
+            },
+            "id": "7bbf59ff-a7f3-4b1a-8810-dba8c92f7dfd",
+            "name": "Merge Link Sources",
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 2.1,
+            "position": [
+                1400,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "model": "llama3.2:3b",
+                "prompt": "=Analyze this Reddit post title and extract the song artist and title. \n\nTitle: {{ $('Merge Link Sources').item.json.title || $('Loop Over Items').item.json.title }}\n\nReturn EXACTLY a JSON object with keys \"artist\" and \"title\".",
+                "options": {
+                    "format": "json"
+                }
+            },
+            "id": "ollama-metadata",
+            "name": "Ollama Metadata",
+            "type": "n8n-nodes-base.ollama",
+            "typeVersion": 1,
+            "position": [
+                1600,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://192.168.178.29:8011/midi/importFromUrl",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"url\": \"{{ $('Merge Link Sources').json.url || $('Loop Over Items').item.json.redditUrl }}\",\n  \"sourceMetadata\": {\n    \"title\": \"{{ $json.title }}\",\n    \"artist\": \"{{ $json.artist }}\",\n    \"postId\": \"{{ $('Loop Over Items').item.json.id }}\"\n  }\n}",
+                "options": {}
+            },
+            "id": "e09da8c8-0cb9-4884-bc44-356c2ff1ce29",
+            "name": "Import to MIDI DB",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1800,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "return {\n  \"title\": $('Ollama Metadata').json.title || $('Loop Over Items').item.json.title,\n  \"artist\": $('Ollama Metadata').json.artist || \"Unknown\",\n  \"hash\": $json.hash || \"-\",\n  \"status\": $json.success ? \"imported\" : \"failed\"\n};"
+            },
+            "id": "format-item",
+            "name": "Format Item Result",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 1,
+            "position": [
+                2000,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "aggregate": "aggregateAllItemData"
+            },
+            "id": "23671de0-0930-4ee0-8cf0-f08ce9152534",
+            "name": "Aggregate",
+            "type": "n8n-nodes-base.aggregate",
+            "typeVersion": 1,
+            "position": [
+                2200,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const results = $input.first().json.data;\nif (!results || results.length === 0) return { sendEmail: false };\n\nconst rows = results.map(r => {\n  const color = r.status === 'imported' ? '#4caf50' : '#f44336';\n  return `<tr>\n    <td style=\"border:1px solid #ddd;padding:8px;\">${r.artist} - ${r.title}</td>\n    <td style=\"border:1px solid #ddd;padding:8px;color:${color};font-weight:bold;\">${r.status.toUpperCase()}</td>\n    <td style=\"border:1px solid #ddd;padding:8px;\"><code style=\"font-size:11px;\">${r.hash}</code></td>\n  </tr>`;\n}).join('');\n\nconst html = `\n  <div style=\"font-family:sans-serif;\">\n    <h2>MIDI Import Report</h2>\n    <table style=\"width:100%;border-collapse:collapse;\">\n      <thead>\n        <tr style=\"background-color:#f2f2f2;\">\n          <th style=\"border:1px solid #ddd;padding:8px;text-align:left;\">Track</th>\n          <th style=\"border:1px solid #ddd;padding:8px;text-align:left;\">Status</th>\n          <th style=\"border:1px solid #ddd;padding:8px;text-align:left;\">Hash</th>\n        </tr>\n      </thead>\n      <tbody>${rows}</tbody>\n    </table>\n  </div>`;\n\nreturn {\n  sendEmail: results.some(r => r.status === 'imported'),\n  body: html\n};"
+            },
+            "id": "77ae2961-1ce7-4f2d-9963-8dd27c4de5bf",
+            "name": "Build HTML Report",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 1,
+            "position": [
+                2400,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "boolean": [
+                        {
+                            "value1": "={{ $json.sendEmail }}",
+                            "value2": true
+                        }
+                    ]
+                }
+            },
+            "id": "1ae9fcff-ccf2-402e-8f25-9dd5967d3c82",
+            "name": "Report Empty?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                2600,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "fromEmail": "AlterEgo - MIDI Importer",
+                "toEmail": "j.copenhaguen.bormuth@gmail.com",
+                "subject": "=Midi Import Report: {{ $node[\"Aggregate\"].json.data.length }} items processed",
+                "emailFormat": "html",
+                "html": "={{ $json.body }}",
+                "options": {}
+            },
+            "id": "5ee4400a-422d-4f27-a7c0-4d9b91c29482",
+            "name": "Send Email",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2.1,
+            "position": [
+                2800,
+                0
+            ],
+            "credentials": {
+                "smtp": {
+                    "id": "LmRXCXtLNzYeMLlq",
+                    "name": "AlterEgo Email Send"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Schedule Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Reddit New",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Reddit New": {
+            "main": [
+                [
+                    {
+                        "node": "Extract & Filter MIDI Links",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract & Filter MIDI Links": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Items",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Over Items": {
+            "main": [
+                [],
+                [
+                    {
+                        "node": "Is BitMidi Page?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is BitMidi Page?": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch BitMidi HTML",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Merge Link Sources",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Fetch BitMidi HTML": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Download Link",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Download Link": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Link Sources",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Merge Link Sources": {
+            "main": [
+                [
+                    {
+                        "node": "Ollama Metadata",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Ollama Metadata": {
+            "main": [
+                [
+                    {
+                        "node": "Import to MIDI DB",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Import to MIDI DB": {
+            "main": [
+                [
+                    {
+                        "node": "Format Item Result",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Item Result": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Aggregate": {
+            "main": [
+                [
+                    {
+                        "node": "Build HTML Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Build HTML Report": {
+            "main": [
+                [
+                    {
+                        "node": "Report Empty?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Report Empty?": {
+            "main": [
+                [
+                    {
+                        "node": "Send Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
