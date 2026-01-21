@@ -149,7 +149,7 @@ router.post('/importFromUrl', async (req, res) => {
         // We simulate a filename from the URL or default
         const fileName = url.split('/').pop() || 'downloaded.mid';
 
-        let midi_file = await parse_midi_file(arrayBuffer, fileName);
+        let midi_file = await parse_midi_file(arrayBuffer, fileName, url);
         if (!midi_file) {
             return res.status(400).json({ error: 'Failed to parse MIDI content' });
         }
@@ -158,8 +158,22 @@ router.post('/importFromUrl', async (req, res) => {
         const existing = await getDbEntryForHash(midi_file.midifile.hash!);
 
         if (existing) {
-            // Already exists - maybe update metadata?
-            // For now, we just return "skipped" but with success: true
+            // Already exists - update filename and path if missing
+            let updated = false;
+            if (existing.midifile.fileName && !existing.midifile.fileName.includes(fileName)) {
+                existing.midifile.fileName.push(fileName);
+                updated = true;
+            }
+            if (!existing.midifile.filePath) {
+                existing.midifile.filePath = url;
+                updated = true;
+            }
+
+            if (updated) {
+                await saveMidiDocument(existing as IDBMidiDocument);
+                console.log(`MIDI updated: ${existing.midifile.hash} with new filename/path`);
+            }
+
             console.log(`MIDI existing: ${midi_file.midifile.hash}`);
             return res.json({ success: true, status: 'skipped', id: (existing as any)._id, hash: existing.midifile.hash });
         }
@@ -195,12 +209,13 @@ router.post('/importFromUrl', async (req, res) => {
                     midi_file.redacted.tags.push({ name: `reddit:post:${sourceMetadata.postId}` });
                 }
             }
+            // Save
+            const id = await saveMidiDocument(midi_file as IDBMidiDocument);
+            console.log(`MIDI imported: ${midi_file?.midifile.hash}`);
+            return res.json({ success: true, status: 'imported', id, hash: midi_file?.midifile.hash });
         }
+        return res.json({ success: false, status: 'failed', reason: 'No midi file found' });
 
-        // Save
-        const id = await saveMidiDocument(midi_file as IDBMidiDocument);
-        console.log(`MIDI imported: ${midi_file?.midifile.hash}`);
-        return res.json({ success: true, status: 'imported', id, hash: midi_file?.midifile.hash });
 
     } catch (err: any) {
         console.error('Error importing from URL:', err);
