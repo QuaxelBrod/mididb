@@ -209,6 +209,11 @@ router.post('/importFromUrl', async (req, res) => {
                     midi_file.redacted.tags.push({ name: `reddit:post:${sourceMetadata.postId}` });
                 }
             }
+            // Ensure filePath is set (user request: "ergänze den pfad, wenn midifile nicht vorhanden ist")
+            if (!midi_file.midifile.filePath) {
+                midi_file.midifile.filePath = url;
+            }
+
             // Save
             const id = await saveMidiDocument(midi_file as IDBMidiDocument);
             console.log(`MIDI imported: ${midi_file?.midifile.hash}`);
